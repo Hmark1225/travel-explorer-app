@@ -1,4 +1,5 @@
 import type { Attraction } from "./models";
+import { attractionIllustration } from "./images.ts";
 import { sources } from "./sources.ts";
 export const placeholderPhoto = {
   kind: "placeholder",
@@ -42,9 +43,11 @@ type Entry = Pick<
       | "lastVerifiedAt"
       | "reviewStatus"
       | "photo"
+      | "heroImage"
+      | "galleryImages"
     >
   >;
-function build(entry: Entry): Attraction {
+function build(entry: Entry, city: "rhodes" | "rome" | "budapest"): Attraction {
   const place = {
     admissionType: "unknown" as Attraction["admissionType"],
     latitude: null as number | null,
@@ -55,16 +58,19 @@ function build(entry: Entry): Attraction {
     officialWebsiteVerifiedAt: null as string | null,
     lastVerifiedAt: null as string | null,
     reviewStatus: "needs-review" as Attraction["reviewStatus"],
-    photo: placeholderPhoto as Attraction["photo"],
+    photo: attractionIllustration(city, entry.id, entry.name),
     ...entry,
   };
   return {
     ...place,
+    photo: entry.heroImage ?? place.photo,
+    heroImage: entry.heroImage ?? place.photo,
+    galleryImages: entry.galleryImages ?? [],
     sourceUrls: entry.sourceIds.map((id) => sources[id].url),
     description: entry.detailedDescription,
     duration: entry.estimatedDuration,
     price: admissionLabels[place.admissionType],
-    image: place.photo.url,
+    image: (entry.heroImage ?? place.photo).url,
   };
 }
 export const rhodesAttractions: Attraction[] = (
@@ -262,7 +268,7 @@ export const rhodesAttractions: Attraction[] = (
       sourceIds: ["rhodesTourism"],
     },
   ] satisfies Entry[]
-).map(build);
+).map((entry) => build(entry, "rhodes"));
 export const romeAttractions: Attraction[] = (
   [
     {
@@ -458,7 +464,7 @@ export const romeAttractions: Attraction[] = (
       sourceIds: ["romeTourism"],
     },
   ] satisfies Entry[]
-).map(build);
+).map((entry) => build(entry, "rome"));
 export const budapestAttractions: Attraction[] = (
   [
     {
@@ -653,4 +659,4 @@ export const budapestAttractions: Attraction[] = (
       sourceIds: ["budapestTourism"],
     },
   ] satisfies Entry[]
-).map(build);
+).map((entry) => build(entry, "budapest"));

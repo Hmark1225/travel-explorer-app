@@ -6,13 +6,13 @@ Prepared 2026-10-25. All entries are **unreviewed editorial drafts**. Direct HTT
 
 - 36 entries: 12 per destination; all `reviewStatus: needs-review` and `lastVerifiedAt: null`.
 - All 36 admission types: `unknown`. All 36 coordinate pairs and official website fields: null. No attraction pins or exact-location actions are currently enabled. Labelled external map searches use place names, or only the destination area for broad experiences; provider results are not verified by this app.
-- All 39 image slots: local UI illustrations; location photographs and commercial-use license evidence are missing. Original Unsplash links and synthetic star ratings have been removed.
+- All 39 hero-image slots now use original AI-generated, credited travel artwork from three bundled image sheets. These illustrations are not evidence of actual location appearance or availability. Documentary location photographs are not used; future third-party photos still require commercial-use license evidence. Original Unsplash links and synthetic star ratings remain removed.
 - The three existing destination overview pins are retained, but are not evidence for an attraction entrance.
 - Visit durations are original editorial estimates; opening hours, numeric prices and availability are intentionally omitted.
 
 ## Per-entry checklist
 
-For each unchecked row: (1) read exact official sources and record claim-to-URL evidence; (2) review description and travel tips; (3) classify admission or retain unknown; (4) verify an entrance/start point if applicable or leave coordinates null; (5) validate the official operator website or leave null; (6) obtain appropriate location photo rights or retain the placeholder. Set actual review dates only after completing review. Checkmarks below represent completed source review, not content authorship.
+For each unchecked row: (1) read exact official sources and record claim-to-URL evidence; (2) review description and travel tips; (3) classify admission or retain unknown; (4) verify an entrance/start point if applicable or leave coordinates null; (5) validate the official operator website or leave null; (6) retain the credited original illustration, or obtain appropriate rights for a documentary location photo. Set actual review dates only after completing review. Checkmarks below represent completed source review, not content authorship.
 
 | Review | Destination | Stable ID                      | Entry                                      | Candidate source IDs            |
 | ------ | ----------- | ------------------------------ | ------------------------------------------ | ------------------------------- |

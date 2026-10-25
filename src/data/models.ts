@@ -12,7 +12,13 @@ export type AttractionCategory =
   | "Wellness";
 export type AdmissionType = "free" | "paid" | "varies" | "unknown";
 export interface Photo {
-  kind: "placeholder" | "photo";
+  kind: "placeholder" | "photo" | "illustration";
+  altText?: string;
+  caption?: string;
+  sourceDescription?: string;
+  assetId?: "rhodes-guide" | "rome-guide" | "budapest-guide";
+  /** Tile in a bundled image sheet; rendering crops without extra downloads. */
+  crop?: { column: number; row: number; columns: number; rows: number };
   url: string | null;
   attribution: string | null;
   license: string | null;
@@ -44,6 +50,8 @@ export interface Attraction {
   lastVerifiedAt: string | null;
   reviewStatus: "needs-review" | "reviewed";
   photo: Photo;
+  heroImage: Photo;
+  galleryImages?: Photo[];
   /** Legacy read aliases retained for repository consumers. */
   description: string;
   duration: string;
@@ -59,6 +67,8 @@ export interface Destination {
   description: string;
   image: string | null;
   photo: Photo;
+  heroImage: Photo;
+  galleryImages?: Photo[];
   rating: string | null;
   /** Existing destination overview points, not reviewed attraction entrances. */
   coordinates: { latitude: number; longitude: number };

@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { isBundledIllustration } from "../src/data/images.ts";
 import { destinations } from "../src/data/destinations.ts";
 import { sources } from "../src/data/sources.ts";
 import {
@@ -126,6 +127,9 @@ test("placeholder art makes no photographic or license claim; future photos requ
       if (p.kind === "placeholder") {
         assert.equal(p.url, null);
         assert.equal(p.license, null);
+      } else if (p.kind === "illustration") {
+        assert.ok(isBundledIllustration(p));
+        assert.ok(p.attribution && p.altText && p.sourceDescription);
       } else {
         assert.ok(
           p.url &&

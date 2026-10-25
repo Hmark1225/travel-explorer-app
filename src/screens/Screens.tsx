@@ -24,6 +24,7 @@ import {
   Button,
   DestinationCard,
   PlaceImage,
+  ImageGallery,
   s,
   colors,
 } from "../components/ui";
@@ -267,8 +268,8 @@ export function ProfileScreen() {
       <Text style={s.section}>A thoughtful travel note</Text>
       <Text style={s.body}>
         Opening times, prices and access rules can change. Check official venue
-        information before you travel. Location photos are pending licensing
-        review; illustrations are placeholders.
+        information before you travel. Images are original AI-generated travel
+        illustrations, not documentary location photographs.
       </Text>
     </Page>
   );
@@ -287,7 +288,7 @@ export function DestinationScreen({
     );
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <PlaceImage photo={item.photo} name={item.name} style={s.hero} />
+      <PlaceImage photo={item.heroImage} name={item.name} style={s.hero} />
       <Text style={[s.eyebrow, { marginTop: 24 }]}>
         {item.country.toUpperCase()} · {item.category.toUpperCase()}
       </Text>
@@ -296,6 +297,7 @@ export function DestinationScreen({
         {item.rating && <Text style={s.rating}>★ {item.rating}</Text>}
       </View>
       <Text style={s.subtitle}>{item.tagline}</Text>
+      <ImageGallery images={item.galleryImages} name={item.name} />
       <Text style={[s.body, { marginTop: 20 }]}>{item.description}</Text>
       <Button
         label={
@@ -332,7 +334,7 @@ export function DestinationScreen({
             })
           }
         >
-          <PlaceImage photo={a.photo} name={a.name} style={s.smallImage} />
+          <PlaceImage photo={a.heroImage} name={a.name} style={s.smallImage} />
           <Text style={s.eyebrow}>
             {a.category.toUpperCase()} · Est. {a.estimatedDuration}
           </Text>
@@ -372,12 +374,13 @@ export function AttractionScreen({
   };
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <PlaceImage photo={a.photo} name={a.name} style={s.hero} />
+      <PlaceImage photo={a.heroImage} name={a.name} style={s.hero} />
       <Text style={[s.eyebrow, { marginTop: 24 }]}>
         {d?.name.toUpperCase()} · {a.category.toUpperCase()}
       </Text>
       <Text style={s.title}>{a.name}</Text>
       <Text style={s.subtitle}>{a.shortDescription}</Text>
+      <ImageGallery images={a.galleryImages} name={a.name} />
       <View style={[s.empty, { marginTop: 20 }]}>
         <Text style={s.body}>Estimated visit: {a.estimatedDuration}</Text>
         <Text style={[s.body, { fontSize: 12 }]}>

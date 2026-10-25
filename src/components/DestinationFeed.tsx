@@ -6,6 +6,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParams } from "../../App";
 import type { Destination } from "../data/models";
 import { useTravel } from "../state/TravelContext";
+import { useLanguage } from "../i18n/LanguageProvider";
 import { Button, DestinationCard, s } from "./ui";
 /** One virtualized vertical scroller: do not nest this inside Page/ScrollView. */
 export function DestinationFeed({
@@ -22,6 +23,7 @@ export function DestinationFeed({
   tripActions?: boolean;
 }) {
   const state = useTravel();
+  const { t } = useLanguage();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParams>>();
   return (
@@ -51,7 +53,7 @@ export function DestinationFeed({
               <View style={{ marginTop: -14, marginBottom: 20 }}>
                 <Button
                   secondary
-                  label={`Remove ${item.name} from plan`}
+                  label={t("trips.removeNamed", { name: item.name })}
                   onPress={() => state.toggleTrip(item.id)}
                 />
               </View>

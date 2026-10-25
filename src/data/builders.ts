@@ -1,3 +1,4 @@
+import { attractionText, destinationText } from "../i18n/content.ts";
 import type { Attraction, Destination } from "./models";
 import { sources, type SourceId } from "./sources.ts";
 import {
@@ -43,6 +44,16 @@ export function buildAttraction(entry: AttractionEntry): Attraction {
   const hero = entry.heroImage ?? neutralPhoto(entry.name);
   return {
     ...content,
+    localized: attractionText(
+      {
+        name: entry.name,
+        shortDescription: entry.shortDescription,
+        detailedDescription: entry.detailedDescription,
+        estimatedDuration: entry.estimatedDuration,
+        usefulTips: entry.usefulTips,
+      },
+      entry.id,
+    ),
     admissionType: entry.admissionType ?? "unknown",
     latitude: point?.latitude ?? null,
     longitude: point?.longitude ?? null,
@@ -98,6 +109,18 @@ export function buildDestination(
   const hero = neutralPhoto(entry.name);
   return {
     ...content,
+    localized: destinationText(
+      {
+        name: entry.name,
+        country: entry.country,
+        region: entry.region,
+        tagline: entry.tagline,
+        description: entry.description,
+        coordinateLabel: entry.coordinateLabel,
+      },
+      entry.id,
+      entry.countryCode,
+    ),
     coordinates: point
       ? { latitude: point.latitude, longitude: point.longitude }
       : legacyCoordinates!,

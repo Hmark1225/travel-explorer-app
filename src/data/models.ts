@@ -1,3 +1,4 @@
+import type { Localized, AttractionText, DestinationText } from "../i18n/types";
 import type { SourceId } from "./sources";
 export type Category = "All" | "Coast" | "Culture" | "City breaks";
 export type AttractionCategory =
@@ -36,6 +37,7 @@ export interface Photo {
   reviewStatus: "needs-review" | "reviewed";
 }
 export interface Attraction {
+  localized: Localized<AttractionText>;
   id: string;
   name: string;
   kind: "place" | "experience";
@@ -71,6 +73,7 @@ export interface Attraction {
   image: string | null;
 }
 export interface Destination {
+  localized: Localized<DestinationText>;
   id: string;
   name: string;
   country: string;

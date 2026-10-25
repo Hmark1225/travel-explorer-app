@@ -1,13 +1,22 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Destination } from "../data/destinations";
 import { travelRepository } from "../services/travelRepository";
+import { useLanguage } from "../i18n/LanguageProvider";
+import { localizeDestination } from "../i18n/content";
+import type { MessageKey } from "../i18n/messages";
 type State = {
   destinations: Destination[];
   saved: string[];
   trips: string[];
   loading: boolean;
-  error: string;
+  error: MessageKey | "";
   toggleSaved: (id: string) => void;
   toggleTrip: (id: string) => void;
   retry: () => void;
@@ -18,7 +27,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
     [saved, setSaved] = useState<string[]>([]),
     [trips, setTrips] = useState<string[]>([]),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState(""),
+    [error, setError] = useState<MessageKey | "">(""),
     [attempt, setAttempt] = useState(0);
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
@@ -31,8 +40,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
         if (active) setDestinations(d);
       })
       .catch(() => {
-        if (active)
-          setError("We couldn’t load destinations. Please try again.");
+        if (active) setError("error.destinations");
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -58,7 +66,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
             setTrips(v.trips);
         }
       })
-      .catch(() => setError("Your local collection could not be restored."))
+      .catch(() => setError("error.restore"))
       .finally(() => setHydrated(true));
   }, []);
   useEffect(() => {
@@ -66,7 +74,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
       AsyncStorage.setItem(
         "travel-explorer:v1",
         JSON.stringify({ saved, trips }),
-      ).catch(() => setError("Changes could not be saved on this device."));
+      ).catch(() => setError("error.save"));
   }, [saved, trips, hydrated]);
   const toggle = (
     setter: React.Dispatch<React.SetStateAction<string[]>>,
@@ -94,6 +102,12 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
 }
 export function useTravel() {
   const state = useContext(Context);
+  const { language, t } = useLanguage();
+  const destinations = useMemo(
+    () =>
+      state?.destinations.map((d) => localizeDestination(d, language)) ?? [],
+    [state?.destinations, language],
+  );
   if (!state) throw new Error("TravelProvider is required");
-  return state;
+  return { ...state, destinations, error: state.error ? t(state.error) : "" };
 }

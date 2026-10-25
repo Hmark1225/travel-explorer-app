@@ -21,6 +21,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "travel-explorer"
+    "scheme": "travel-explorer",
+    "plugins": [
+      "expo-localization"
+    ]
   }
 }

@@ -14,6 +14,8 @@ import {
   AttractionScreen,
 } from "./src/screens/Screens";
 import MapScreen from "./src/screens/MapScreen";
+import { LanguageProvider, useLanguage } from "./src/i18n/LanguageProvider";
+import type { TranslationKey } from "./src/i18n/core";
 export type RootStackParams = {
   Home: { screen: "Explore" } | undefined;
   Destination: { id: string };
@@ -29,10 +31,13 @@ const icons: Record<string, React.ComponentProps<typeof Ionicons>["name"]> = {
   Profile: "person-outline",
 };
 function Tabs() {
+  const { t } = useLanguage();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        title: t(`tabs.${route.name}` as TranslationKey),
+        tabBarAccessibilityLabel: t(`tabs.${route.name}` as TranslationKey),
         tabBarActiveTintColor: "#167568",
         tabBarInactiveTintColor: "#7A8481",
         tabBarStyle: { backgroundColor: "#FFFEFA", borderTopColor: "#E8EBE5" },
@@ -52,11 +57,22 @@ function Tabs() {
 }
 export default function App() {
   return (
-    <TravelProvider>
+    <LanguageProvider>
+      <TravelProvider>
+        <ApplicationNavigation />
+      </TravelProvider>
+    </LanguageProvider>
+  );
+}
+function ApplicationNavigation() {
+  const { t } = useLanguage();
+  return (
+    <>
       <StatusBar style="dark" />
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
+            headerBackTitle: t("nav.back"),
             headerTintColor: "#183D35",
             headerStyle: { backgroundColor: "#FAFAF5" },
             headerShadowVisible: false,
@@ -71,15 +87,15 @@ export default function App() {
           <Stack.Screen
             name="Destination"
             component={DestinationScreen}
-            options={{ title: "Discover a destination" }}
+            options={{ title: t("nav.destination") }}
           />
           <Stack.Screen
             name="Attraction"
             component={AttractionScreen}
-            options={{ title: "Worth the journey" }}
+            options={{ title: t("nav.attraction") }}
           />
         </Stack.Navigator>
       </NavigationContainer>
-    </TravelProvider>
+    </>
   );
 }

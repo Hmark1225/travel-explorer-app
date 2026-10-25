@@ -8,8 +8,10 @@ import type { RootStackParams } from "../../App";
 import { useTravel } from "../state/TravelContext";
 import { Button, PlaceImage, SourceLink, s } from "../components/ui";
 import { verifiedCoordinates } from "../data/placeActions";
+import { useLanguage } from "../i18n/LanguageProvider";
 export default function MapScreen() {
   const { destinations } = useTravel();
+  const { t } = useLanguage();
   const [selected, setSelected] = useState("rhodes");
   const [selectedAttraction, setSelectedAttraction] = useState<string | null>(
     null,
@@ -37,13 +39,12 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={s.screen} edges={["top"]}>
       <View style={{ padding: 16 }}>
-        <Text style={s.eyebrow}>FOLLOW YOUR CURIOSITY</Text>
+        <Text style={s.eyebrow}>{t("map.eyebrow")}</Text>
         <Text style={[s.title, { fontSize: 26, lineHeight: 32 }]}>
-          A world of possibility.
+          {t("map.title")}
         </Text>
         <Text style={[s.subtitle, { fontSize: 12, lineHeight: 18 }]}>
-          Green: destination overviews. Amber: sourced town overviews, not
-          verified venue entrances.
+          {t("map.legend")}
         </Text>
       </View>
       <MapView
@@ -54,7 +55,7 @@ export default function MapScreen() {
           latitudeDelta: 24,
           longitudeDelta: 48,
         }}
-        accessibilityLabel="Destination map of Europe"
+        accessibilityLabel={t("map.accessibility")}
       >
         {destinations.map((d) => (
           <Marker
@@ -74,7 +75,7 @@ export default function MapScreen() {
             key={`place:${attraction.id}`}
             coordinate={point}
             title={attraction.name}
-            description={`${destination.name} · Sourced town overview, not an entrance`}
+            description={t("map.townMarker", { name: destination.name })}
             pinColor="#B66B35"
             onPress={() => {
               setSelected(destination.id);
@@ -85,8 +86,8 @@ export default function MapScreen() {
       </MapView>
       <Text style={[s.body, { fontSize: 12, padding: 12 }]}>
         {places.length === 0
-          ? "Attraction coordinates await review; no place pins are published yet."
-          : `${places.length} sourced town overviews · No verified venue entrances`}
+          ? t("map.noPoints")
+          : t("map.pointCount", { count: places.length })}
       </Text>
       {item && (
         <ScrollView
@@ -120,18 +121,18 @@ export default function MapScreen() {
           >
             {attraction?.coordinateAttribution ??
               item.coordinateAttribution ??
-              "Legacy destination point: source review pending"}
+              t("map.legacy")}
           </Text>
           <SourceLink
             url={attraction?.coordinateSourceUrl ?? item.coordinateSourceUrl}
-            label="Overview point source"
+            label={t("source.overview")}
           />
           <SourceLink
             url={attraction?.coordinateLicenseUrl ?? item.coordinateLicenseUrl}
-            label="Geographic data license"
+            label={t("source.geoLicense")}
           />
           <Button
-            label={`Explore ${attraction?.name ?? item.name}`}
+            label={t("map.explore", { name: attraction?.name ?? item.name })}
             onPress={() =>
               attraction
                 ? navigation.navigate("Attraction", {

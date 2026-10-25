@@ -6,7 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParams } from "../../App";
 import { useTravel } from "../state/TravelContext";
-import { Button, s } from "../components/ui";
+import { Button, PlaceImage, s } from "../components/ui";
 import { verifiedCoordinates } from "../data/placeActions";
 export default function MapScreen() {
   const { destinations } = useTravel();
@@ -26,16 +26,18 @@ export default function MapScreen() {
   );
   return (
     <SafeAreaView style={s.screen} edges={["top"]}>
-      <View style={{ padding: 24 }}>
+      <View style={{ padding: 16 }}>
         <Text style={s.eyebrow}>FOLLOW YOUR CURIOSITY</Text>
-        <Text style={s.title}>A world of possibility.</Text>
-        <Text style={s.subtitle}>
+        <Text style={[s.title, { fontSize: 26, lineHeight: 32 }]}>
+          A world of possibility.
+        </Text>
+        <Text style={[s.subtitle, { fontSize: 12, lineHeight: 18 }]}>
           Destination pins are overview points. Place pins appear only after
           coordinate review.
         </Text>
       </View>
       <MapView
-        style={{ flex: 1, minHeight: 200 }}
+        style={{ flex: 1, minHeight: 120 }}
         initialRegion={{
           latitude: 42,
           longitude: 20,
@@ -77,14 +79,29 @@ export default function MapScreen() {
           : `${places.length} reviewed place locations · Green: destinations · Amber: places`}
       </Text>
       {item && (
-        <View style={{ padding: 20, backgroundColor: "#FFFEFA" }}>
-          <Text style={s.eyebrow}>{item.country.toUpperCase()}</Text>
-          <Text style={[s.cardTitle, { fontSize: 23 }]}>
-            {attraction?.name ?? item.name}
-          </Text>
-          <Text style={s.body}>
-            {attraction?.shortDescription ?? item.tagline}
-          </Text>
+        <View style={{ padding: 16, backgroundColor: "#FFFEFA" }}>
+          <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
+            <View style={{ width: 96 }}>
+              <PlaceImage
+                photo={attraction?.heroImage ?? item.heroImage}
+                name={attraction?.name ?? item.name}
+                compact
+                style={{ width: 96, height: 80, borderRadius: 14 }}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.eyebrow}>{item.country.toUpperCase()}</Text>
+              <Text numberOfLines={2} style={[s.cardTitle, { fontSize: 22 }]}>
+                {attraction?.name ?? item.name}
+              </Text>
+              <Text
+                numberOfLines={2}
+                style={[s.body, { fontSize: 12, lineHeight: 18 }]}
+              >
+                {attraction?.shortDescription ?? item.tagline}
+              </Text>
+            </View>
+          </View>
           <Button
             label={`Explore ${attraction?.name ?? item.name}`}
             onPress={() =>

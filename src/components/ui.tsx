@@ -1,6 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Image,
+  ScrollView,
+  useWindowDimensions,
+  type ViewStyle,
   Pressable,
   StyleSheet,
   Text,
@@ -10,6 +13,8 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Destination, Photo } from "../data/destinations";
+import { imageSources } from "../assets/imageSources";
+import { atlasFrame, isBundledIllustration } from "../data/images";
 import { isLicensedPhoto } from "../data/placeActions";
 export const colors = {
   ink: "#183D35",
@@ -42,48 +47,170 @@ export function Button({
     </Pressable>
   );
 }
-/** All current art is a locally rendered placeholder, never a location photograph. */
-export function PlaceImage({
+/** A keyed frame resets load failures when a map selection or URL changes. */
+export function PlaceImage(props: {
+  photo?: Photo | null;
+  name: string;
+  style: StyleProp<ImageStyle>;
+  compact?: boolean;
+}) {
+  const identity = JSON.stringify([
+    props.photo?.assetId,
+    props.photo?.crop,
+    props.photo?.url,
+  ]);
+  return <ImageFrame key={identity} {...props} />;
+}
+function ImageFrame({
   photo,
   name,
   style,
+  compact = false,
 }: {
-  photo: Photo;
+  photo?: Photo | null;
   name: string;
   style: StyleProp<ImageStyle>;
+  compact?: boolean;
 }) {
-  if (isLicensedPhoto(photo) && photo.url) {
-    return (
-      <View>
-        <Image
-          source={{ uri: photo.url }}
-          accessibilityLabel={name}
-          style={style}
-        />
-        <Text style={[s.body, { fontSize: 11 }]}>
-          {photo.attribution} · {photo.license}
-        </Text>
-      </View>
-    );
-  }
+  const [failed, setFailed] = useState(false);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const illustration = !!photo && isBundledIllustration(photo);
+  const source =
+    illustration && photo?.assetId
+      ? imageSources[photo.assetId]
+      : photo && isLicensedPhoto(photo) && photo.url
+        ? { uri: photo.url, cache: "force-cache" as const }
+        : null;
+  const available = source !== null && !failed;
+  const resolved =
+    typeof source === "number" ? Image.resolveAssetSource(source) : null;
+  const frame =
+    resolved?.width && resolved?.height && photo?.crop
+      ? atlasFrame(
+          size.width,
+          size.height,
+          resolved.width,
+          resolved.height,
+          photo.crop,
+        )
+      : null;
   return (
-    <View
-      accessibilityLabel={`Illustrated placeholder for ${name}; no location photo`}
-      style={[
-        style as StyleProp<import("react-native").ViewStyle>,
-        {
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 10,
-          padding: 20,
-        },
-      ]}
-    >
-      <Ionicons name="compass-outline" size={42} color={colors.green} />
-      <Text style={s.eyebrow}>A PLACE TO DISCOVER</Text>
-      <Text style={[s.body, { fontSize: 12, textAlign: "center" }]}>
-        Illustration · Location photo pending
-      </Text>
+    <View>
+      <View
+        accessible
+        accessibilityRole="image"
+        accessibilityLabel={
+          available ? photo?.altText || name : `Image unavailable for ${name}`
+        }
+        onLayout={({ nativeEvent: { layout } }) =>
+          setSize((old) =>
+            old.width === layout.width && old.height === layout.height
+              ? old
+              : { width: layout.width, height: layout.height },
+          )
+        }
+        style={[
+          style as StyleProp<ViewStyle>,
+          { overflow: "hidden", backgroundColor: "#D8E4DD" },
+        ]}
+      >
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: 12,
+          }}
+        >
+          <Ionicons
+            name="image-outline"
+            size={compact ? 26 : 38}
+            color={colors.green}
+          />
+          {!compact && (
+            <Text style={[s.body, { fontSize: 12, textAlign: "center" }]}>
+              {failed ? "Image unavailable" : "A place to discover"}
+            </Text>
+          )}
+        </View>
+        {available &&
+          source &&
+          (!illustration || (size.width > 0 && frame !== null)) && (
+            <Image
+              source={source}
+              accessible={false}
+              resizeMode="cover"
+              onError={() => setFailed(true)}
+              style={
+                frame
+                  ? { position: "absolute", ...frame }
+                  : {
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }
+              }
+            />
+          )}
+      </View>
+      {available && photo?.attribution && (
+        <Text
+          numberOfLines={compact ? 2 : undefined}
+          style={[
+            s.body,
+            {
+              fontSize: 10,
+              lineHeight: 15,
+              marginTop: 5,
+              marginHorizontal: compact ? 0 : 2,
+            },
+          ]}
+        >
+          {photo.kind === "illustration" ? "Illustration · " : ""}
+          {photo.attribution}
+          {photo.kind === "photo" && photo.license ? ` · ${photo.license}` : ""}
+        </Text>
+      )}
+    </View>
+  );
+}
+export function ImageGallery({
+  images,
+  name,
+}: {
+  images?: Photo[];
+  name: string;
+}) {
+  const { width } = useWindowDimensions();
+  if (!images?.length) return null;
+  return (
+    <View style={{ marginTop: 18 }}>
+      <Text style={s.eyebrow}>MORE TO DISCOVER</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 12, paddingVertical: 12 }}
+      >
+        {images.map((photo, index) => (
+          <View
+            key={`${photo.assetId ?? photo.url}:${index}`}
+            style={{ width: Math.min(width - 72, 420) }}
+          >
+            <PlaceImage
+              photo={photo}
+              name={`${name}, gallery image ${index + 1}`}
+              style={{ width: "100%", height: 180, borderRadius: 18 }}
+            />
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -106,7 +233,7 @@ export function DestinationCard({
         onPress={onOpen}
       >
         <PlaceImage
-          photo={item.photo}
+          photo={item.heroImage}
           name={`${item.name}, ${item.country}`}
           style={s.cardImage}
         />

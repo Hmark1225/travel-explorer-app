@@ -1,0 +1,9 @@
+# Travel Explorer illustration assets
+
+These three sheets are original AI-generated travel artwork created for this project on 2026-10-25 using OpenAI image generation. They are artistic interpretations inspired by Rhodes, Rome and Budapest, not documentary photographs or verified records of venue architecture, exhibits, animals, swimming conditions or available facilities. No third-party photo or photographer credit is claimed, and no external photo license has been invented. Credits in the app identify the artwork as AI-generated.
+
+Each JPEG is 1024 × 1536 with a 3-column × 4-row layout. Scenes correspond to `illustrationOrder` in `src/data/images.ts`, left to right and top to bottom. The shared component renders one tile at a time with a small inset to avoid panel seams. Stable ID assignments keep images attached to their entries when editorial content is reordered. Destination heroes reuse each city's first scene, and their galleries reuse two other scenes.
+
+The art direction is a textured, sunlit editorial travel illustration: Aegean teal and limestone for Rhodes, warm sienna and umbrella pines for Rome, ivory, Danube blue and green for Budapest. Prompts requested the named landmarks or experience themes listed in the registry, no text, logos or recognizable visitors. The images were visually inspected as a complete set and encoded as progressive JPEGs at quality 84 with metadata stripped for mobile distribution. Original generated PNGs are not included in the repository; these ready-to-use assets require no image build tooling.
+
+Total added image payload is under 2 MB. The three files are bundled through static React Native `require` calls and need no remote image host, API key or new package. Model `verifiedAt` dates refer to artwork preparation, not travel-source verification. Future documentary photography must satisfy the existing rights-evidence checks before display.

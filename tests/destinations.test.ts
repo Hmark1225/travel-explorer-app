@@ -20,7 +20,7 @@ test("includes complete Rhodes, Rome and Budapest destination and attraction rec
       ids.add(a.id);
       assert.ok(a.description && a.duration && a.price);
       assert.equal(a.image, null);
-      assert.equal(a.photo.kind, "placeholder");
+      assert.equal(a.heroImage.kind, "illustration");
     }
   }
 });

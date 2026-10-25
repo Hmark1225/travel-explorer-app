@@ -1,7 +1,16 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ImageStyle,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import type { Destination } from "../data/destinations";
+import type { Destination, Photo } from "../data/destinations";
+import { isLicensedPhoto } from "../data/placeActions";
 export const colors = {
   ink: "#183D35",
   muted: "#75817B",
@@ -33,6 +42,51 @@ export function Button({
     </Pressable>
   );
 }
+/** All current art is a locally rendered placeholder, never a location photograph. */
+export function PlaceImage({
+  photo,
+  name,
+  style,
+}: {
+  photo: Photo;
+  name: string;
+  style: StyleProp<ImageStyle>;
+}) {
+  if (isLicensedPhoto(photo) && photo.url) {
+    return (
+      <View>
+        <Image
+          source={{ uri: photo.url }}
+          accessibilityLabel={name}
+          style={style}
+        />
+        <Text style={[s.body, { fontSize: 11 }]}>
+          {photo.attribution} · {photo.license}
+        </Text>
+      </View>
+    );
+  }
+  return (
+    <View
+      accessibilityLabel={`Illustrated placeholder for ${name}; no location photo`}
+      style={[
+        style as StyleProp<import("react-native").ViewStyle>,
+        {
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 10,
+          padding: 20,
+        },
+      ]}
+    >
+      <Ionicons name="compass-outline" size={42} color={colors.green} />
+      <Text style={s.eyebrow}>A PLACE TO DISCOVER</Text>
+      <Text style={[s.body, { fontSize: 12, textAlign: "center" }]}>
+        Illustration · Location photo pending
+      </Text>
+    </View>
+  );
+}
 export function DestinationCard({
   item,
   saved,
@@ -51,9 +105,9 @@ export function DestinationCard({
         accessibilityLabel={`Discover ${item.name}`}
         onPress={onOpen}
       >
-        <Image
-          source={{ uri: item.image }}
-          accessibilityLabel={`${item.name}, ${item.country}`}
+        <PlaceImage
+          photo={item.photo}
+          name={`${item.name}, ${item.country}`}
           style={s.cardImage}
         />
         <View style={s.cardBody}>
@@ -61,7 +115,7 @@ export function DestinationCard({
             <Text style={s.eyebrow}>
               {item.country.toUpperCase()} · {item.category.toUpperCase()}
             </Text>
-            <Text style={s.rating}>★ {item.rating}</Text>
+            {item.rating && <Text style={s.rating}>★ {item.rating}</Text>}
           </View>
           <Text style={s.cardTitle}>{item.name}</Text>
           <Text style={s.body}>{item.tagline}</Text>

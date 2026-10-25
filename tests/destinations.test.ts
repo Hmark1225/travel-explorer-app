@@ -10,7 +10,7 @@ test("includes complete Rhodes, Rome and Budapest destination and attraction rec
   for (const d of destinations) {
     assert.ok(!ids.has(d.id));
     ids.add(d.id);
-    assert.ok(d.attractions.length >= 2);
+    assert.equal(d.attractions.length, 12);
     assert.ok(d.coordinates.latitude >= -90 && d.coordinates.latitude <= 90);
     assert.ok(
       d.coordinates.longitude >= -180 && d.coordinates.longitude <= 180,
@@ -19,7 +19,8 @@ test("includes complete Rhodes, Rome and Budapest destination and attraction rec
       assert.ok(!ids.has(a.id));
       ids.add(a.id);
       assert.ok(a.description && a.duration && a.price);
-      assert.equal(new URL(a.image).protocol, "https:");
+      assert.equal(a.image, null);
+      assert.equal(a.photo.kind, "placeholder");
     }
   }
 });

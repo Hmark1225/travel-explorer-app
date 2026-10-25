@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
+  Alert,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -18,7 +20,20 @@ import { Ionicons } from "@expo/vector-icons";
 import type { RootStackParams } from "../../App";
 import { filterDestinations, type Category } from "../data/destinations";
 import { useTravel } from "../state/TravelContext";
-import { Button, DestinationCard, s, colors } from "../components/ui";
+import {
+  Button,
+  DestinationCard,
+  PlaceImage,
+  s,
+  colors,
+} from "../components/ui";
+import { admissionLabels } from "../data/attractions";
+import {
+  externalMapSearchUrl,
+  externalMapUrl,
+  officialWebsiteUrl,
+} from "../data/placeActions";
+
 export function Page({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaView style={s.screen} edges={["top"]}>
@@ -135,7 +150,7 @@ export function ExploreScreen() {
         />
       ))}
       <Text style={[s.body, { textAlign: "center", fontSize: 12 }]}>
-        A curated start to your next adventure · Demo collection
+        36 curated ideas · Practical information awaiting review
       </Text>
     </Page>
   );
@@ -246,14 +261,14 @@ export function ProfileScreen() {
       <Text style={s.section}>Made for discovery</Text>
       <Text style={s.body}>
         Travel Explorer is your starting point for a more memorable journey.
-        This preview uses curated mock data. Account sign-in and cloud sync are
-        not connected yet.
+        This guide contains original editorial suggestions awaiting source
+        review. Account sign-in and cloud sync are not connected yet.
       </Text>
       <Text style={s.section}>A thoughtful travel note</Text>
       <Text style={s.body}>
         Opening times, prices and access rules can change. Check official venue
-        information before you travel. Photos are illustrative and require an
-        internet connection.
+        information before you travel. Location photos are pending licensing
+        review; illustrations are placeholders.
       </Text>
     </Page>
   );
@@ -272,13 +287,13 @@ export function DestinationScreen({
     );
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <Image source={{ uri: item.image }} style={s.hero} />
+      <PlaceImage photo={item.photo} name={item.name} style={s.hero} />
       <Text style={[s.eyebrow, { marginTop: 24 }]}>
         {item.country.toUpperCase()} · {item.category.toUpperCase()}
       </Text>
       <View style={s.row}>
         <Text style={s.title}>{item.name}</Text>
-        <Text style={s.rating}>★ {item.rating}</Text>
+        {item.rating && <Text style={s.rating}>★ {item.rating}</Text>}
       </View>
       <Text style={s.subtitle}>{item.tagline}</Text>
       <Text style={[s.body, { marginTop: 20 }]}>{item.description}</Text>
@@ -299,7 +314,11 @@ export function DestinationScreen({
         }
         onPress={() => state.toggleTrip(item.id)}
       />
-      <Text style={s.section}>Don’t miss a thing</Text>
+      <Text style={s.section}>{item.attractions.length} ways to explore</Text>
+      <Text style={[s.body, { marginBottom: 18 }]}>
+        Original guide suggestions. Durations are editorial estimates.
+        Admission, access and place locations await source review.
+      </Text>
       {item.attractions.map((a) => (
         <Pressable
           accessibilityRole="button"
@@ -313,12 +332,12 @@ export function DestinationScreen({
             })
           }
         >
-          <Image source={{ uri: a.image }} style={s.smallImage} />
+          <PlaceImage photo={a.photo} name={a.name} style={s.smallImage} />
           <Text style={s.eyebrow}>
-            {a.category.toUpperCase()} · {a.duration}
+            {a.category.toUpperCase()} · Est. {a.estimatedDuration}
           </Text>
           <Text style={[s.cardTitle, { fontSize: 21 }]}>{a.name} ↗</Text>
-          <Text style={s.body}>{a.price}</Text>
+          <Text style={s.body}>{a.shortDescription}</Text>
         </Pressable>
       ))}
     </ScrollView>
@@ -336,24 +355,113 @@ export function AttractionScreen({
         <Text style={s.title}>Attraction unavailable</Text>
       </Page>
     );
+  const website = officialWebsiteUrl(a);
+  const mapUrl = externalMapUrl(a, Platform.OS === "ios" ? "ios" : "android");
+  const mapSearchUrl = d
+    ? externalMapSearchUrl(a, d, Platform.OS === "ios" ? "ios" : "android")
+    : null;
+  const openUrl = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(
+        "Couldn’t open link",
+        "Please check your connection and try again.",
+      );
+    }
+  };
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <Image source={{ uri: a.image }} style={s.hero} />
+      <PlaceImage photo={a.photo} name={a.name} style={s.hero} />
       <Text style={[s.eyebrow, { marginTop: 24 }]}>
         {d?.name.toUpperCase()} · {a.category.toUpperCase()}
       </Text>
       <Text style={s.title}>{a.name}</Text>
+      <Text style={s.subtitle}>{a.shortDescription}</Text>
       <View style={[s.empty, { marginTop: 20 }]}>
-        <Text style={s.body}>◷ {a.duration}</Text>
-        <Text style={s.body}>Ticket information: {a.price}</Text>
+        <Text style={s.body}>Estimated visit: {a.estimatedDuration}</Text>
+        <Text style={[s.body, { fontSize: 12 }]}>
+          Editorial planning estimate, not a venue guarantee.
+        </Text>
+        <Text style={[s.body, { marginTop: 10 }]}>
+          {admissionLabels[a.admissionType]}
+        </Text>
+        <Text style={[s.body, { marginTop: 10 }]}>
+          {a.kind === "experience"
+            ? "Self-guided experience, not a bookable product."
+            : "Individual place guide"}
+        </Text>
       </View>
       <Text style={s.section}>A moment worth making</Text>
-      <Text style={s.body}>{a.description}</Text>
-      <Text style={s.section}>Before you go</Text>
+      <Text style={s.body}>{a.detailedDescription}</Text>
+      <Text style={s.section}>Practical travel tips</Text>
+      {a.usefulTips.map((tip, i) => (
+        <Text key={i} style={[s.body, { marginBottom: 12 }]}>
+          • {tip}
+        </Text>
+      ))}
+      {website ? (
+        <Button
+          label="Open official website"
+          onPress={() => void openUrl(website)}
+        />
+      ) : (
+        <Text style={[s.body, { marginTop: 16 }]}>
+          Official website link awaiting verification.
+        </Text>
+      )}
+      {mapUrl ? (
+        <Button
+          secondary
+          label="Open location in Maps"
+          onPress={() => void openUrl(mapUrl)}
+        />
+      ) : (
+        <Text style={[s.body, { marginTop: 16 }]}>
+          Exact location awaiting verification. No unverified map pin is shown.
+        </Text>
+      )}
+      {!mapUrl && mapSearchUrl && (
+        <>
+          <Button
+            secondary
+            label={
+              a.kind === "place"
+                ? "Search place in Maps"
+                : "Search destination area in Maps"
+            }
+            onPress={() => void openUrl(mapSearchUrl)}
+          />
+          <Text style={[s.body, { fontSize: 12, marginTop: 8 }]}>
+            Opens a name search, not a verified entrance or route. Check the
+            provider’s result before travelling.
+          </Text>
+        </>
+      )}
+      <Text style={s.section}>About this information</Text>
       <Text style={s.body}>
-        This is sample travel information. Confirm current opening hours,
-        accessibility and admission with the venue before visiting.
+        {a.lastVerifiedAt
+          ? `Last source review: ${a.lastVerifiedAt}`
+          : "Not live-verified. Official source access was unavailable during preparation."}
       </Text>
+      <Text style={[s.body, { marginTop: 10 }]}>
+        Confirm admission, opening arrangements, accessibility and availability
+        before travelling. No current prices or opening hours are claimed.
+      </Text>
+      <Text style={[s.body, { marginTop: 10 }]}>
+        {a.lastVerifiedAt
+          ? "Sources reviewed:"
+          : "Source review leads (not verified references):"}
+      </Text>
+      {a.sourceUrls.map((url) => (
+        <Text
+          selectable
+          key={url}
+          style={[s.body, { fontSize: 12, marginTop: 8 }]}
+        >
+          {url}
+        </Text>
+      ))}
     </ScrollView>
   );
 }

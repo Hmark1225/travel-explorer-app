@@ -1,6 +1,6 @@
 # Travel Explorer
 
-An English-language Expo SDK 58 / React Native / TypeScript app for iOS and Android, with Explore, Map, Saved, Trips and Profile tabs. The offline guide now contains **18 destinations and 156 authored attractions/experiences**. The original three destinations retain 12 entries each; the 15 additions have eight each.
+An English/Hungarian Expo SDK 58 / React Native / TypeScript app for iOS and Android, with Explore, Map, Saved, Trips and Profile tabs. The offline guide now contains **18 destinations and 156 authored attractions/experiences**. The original three destinations retain 12 entries each; the 15 additions have eight each.
 
 **Editorial status:** no travel entry or destination summary is fully source-reviewed. Official tourism and Wikimedia requests were blocked in this environment. There are **zero reviewed photographs**, so all 174 hero slots show neutral placeholders. Previous AI-generated images have been removed. Fifteen new destination overview points and 12 town-walk overview points were extracted from named, checksum-pinned gazetteer records; these do **not** verify venue entrances, walking routes, current operations or admission.
 
@@ -34,9 +34,10 @@ npm run typecheck
 npm test
 EXPO_OFFLINE=1 npm run export:check
 npm run audit:content -- --check
+npm run audit:localization -- --check
 ```
 
-Tests cover counts, global IDs, preservation of all 36 original editorial records, source/review distinctions, search, geography bounds/provenance, rejection of ambiguous geography and photo metadata policy. Native Hermes exports compile both iOS and Android; they do not establish device behavior or legal compliance. No dependency or lockfile upgrades were made.
+Tests cover counts, global IDs, preservation of all 36 original editorial records, source/review distinctions, search, geography bounds/provenance, rejection of ambiguous geography and photo metadata policy. Native Hermes exports compile both iOS and Android; they do not establish device behavior or legal compliance. The existing dependency versions remain pinned; `expo-localization` was added using the SDK 58 compatibility table.
 
 To inspect or regenerate the content/photo audit:
 
@@ -87,3 +88,23 @@ These checks remain pending on this branch; the previously reported seven iPhone
 5. Test external Maps searches and sourced town-point actions, returning to the app afterward. Test a source-link failure offline. Gazetteer credit/source/license links should remain readable.
 6. Confirm neutral placeholders across Explore, details, Saved, Trips and Map with no generated artwork or unreviewed photo. A developer may use a **synthetic test fixture only** to exercise a failing photo URL and source-change recovery; it is not a publishable rights record. A real photo's credits and links need device review after its evidence has actually been approved.
 7. Check small-screen layout, increased system text, VoiceOver/TalkBack, safe areas and Android hardware back. Offline guide/search/collections should work after the bundle is cached; basemap tiles and external links need connectivity.
+
+## English and Hungarian
+
+Open **Profile → Language** (Hungarian: **Profil → Nyelv**) to choose English or Hungarian. Tabs, headings, filters, search, errors, map markers, accessibility labels and all destination/attraction display content change immediately. A separate AsyncStorage key, `travel-explorer:language:v1`, stores the manual choice; Saved/Trips remain under the unchanged `travel-explorer:v1` key. No collection reset or migration occurs.
+
+On startup, Expo's `expo-localization` supplies the primary device locale: Hungarian selects `hu`, English selects `en`, and all other languages default to `en`. A stored manual choice takes precedence, including a manually selected English preference on a Hungarian device. Without a manual choice the device default is detected each launch. A short localized loading indicator prevents a flash of the device language before the saved choice is read. Language changes apply synchronously; serialized writes and revision guards prevent older reads/writes from undoing a newer selection. Storage failures are reported in the selected language and can be retried by selecting it again.
+
+The app uses a small typed translation catalog and React context, with no translation backend or heavyweight localization dependency. `src/i18n/messages.ts` holds the complete English/Hungarian UI templates. Existing English travel modules remain the source; `src/i18n/content/hu/<destination>.ts` holds authored Hungarian names, descriptions and tips, and shared country/duration vocabulary lives in `contentShared.ts`. Builders attach `localized: { en, hu }` objects. The repository remains source-English; `useTravel()` projects only display fields into the active language. Canonical IDs, category codes, coordinate/source values and photo metadata are unchanged. Both English and Hungarian search names remain available in either interface language.
+
+[Localization architecture and future-language instructions](docs/localization.md) · [Completeness report](docs/localization-report.json)
+
+```sh
+npm run audit:localization
+npm run audit:localization -- --write
+npm run audit:localization -- --check
+```
+
+The current catalog covers **143 UI templates, 18 destinations, 156 attractions, 312 tips and 19 duration phrases**, with **zero missing/incomplete translations**. Proper names may intentionally remain in their original form. Brand text, legal photo credits/licenses/provenance, source URLs and geographic attribution remain verbatim; their surrounding UI is translated. Vendor basemap labels, external websites and operating-system dialogs remain controlled by their provider/system locale. Translation does not change the underlying travel-source review status or photo-rights policy.
+
+Device checks remain pending: toggle languages in Profile and verify the current tab and all navigation labels change without restarting; open old/new destinations and first/middle/last attraction entries in both languages; test Hungarian names and accent-free search; close/reopen to verify the manual choice persists; confirm old Saved/Trips survive both switching and restart. Check long Hungarian text and `á é í ó ö ő ú ü ű` on a small iPhone with larger system text and VoiceOver, then repeat navigation/back behavior on Android. On a fresh test installation verify Hungarian/English/unsupported primary device locales, without deleting real user collections. Authored content is fully translated; this automated coverage report does not substitute for device or independent linguistic QA.

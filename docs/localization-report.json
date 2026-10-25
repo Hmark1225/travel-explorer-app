@@ -1,0 +1,24 @@
+{
+  "sourceLanguage": "en",
+  "supportedLanguages": [
+    "en",
+    "hu"
+  ],
+  "counts": {
+    "destinations": 18,
+    "attractions": 156,
+    "practicalTips": 312,
+    "durationPhrases": 19,
+    "uiMessages": 143
+  },
+  "missingOrIncomplete": 0,
+  "issues": [],
+  "preservedVerbatim": [
+    "Travel Explorer brand",
+    "Proper names where translation would mislead",
+    "Source URLs and identifiers",
+    "Photo author, attribution, license, provenance and modification records",
+    "Geographic source attribution and record identifiers"
+  ],
+  "scope": "All current destination and attraction display fields have en/hu variants. Translation does not verify the underlying travel facts. System/vendor basemap labels and source/legal documents retain their provider language."
+}

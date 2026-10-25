@@ -16,6 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import type { Destination, Photo } from "../data/destinations";
 import { isHttpsUrl, isLicensedPhoto } from "../data/placeActions";
+import { useLanguage } from "../i18n/LanguageProvider";
 export const colors = {
   ink: "#183D35",
   muted: "#75817B",
@@ -55,6 +56,7 @@ export function SourceLink({
   url: string | null;
   label: string;
 }) {
+  const { t } = useLanguage();
   if (!isHttpsUrl(url)) return null;
   return (
     <Pressable
@@ -62,10 +64,7 @@ export function SourceLink({
       onPress={(event) => {
         event.stopPropagation();
         void Linking.openURL(url).catch(() =>
-          Alert.alert(
-            "Couldn’t open source",
-            "Please try again when connected.",
-          ),
+          Alert.alert(t("error.sourceTitle"), t("error.sourceBody")),
         );
       }}
       style={{ paddingVertical: 8 }}
@@ -105,6 +104,7 @@ function ImageFrame({
   style: StyleProp<ImageStyle>;
   compact?: boolean;
 }) {
+  const { t } = useLanguage();
   const [failed, setFailed] = useState(false);
   const available = !!photo && isLicensedPhoto(photo) && !!photo.url && !failed;
   return (
@@ -115,7 +115,7 @@ function ImageFrame({
         accessibilityLabel={
           available
             ? photo.altText || photo.subject || name
-            : `No reviewed photograph available for ${name}`
+            : t("photo.none", { name })
         }
         style={[
           style as StyleProp<ViewStyle>,
@@ -142,7 +142,7 @@ function ImageFrame({
           />
           {!compact && (
             <Text style={[s.body, { fontSize: 12, textAlign: "center" }]}>
-              {failed ? "Photo unavailable" : "Photo awaiting review"}
+              {t(failed ? "photo.unavailable" : "photo.pending")}
             </Text>
           )}
         </View>
@@ -171,20 +171,19 @@ function ImageFrame({
           </Text>
           {!compact && (
             <Text style={[s.body, { fontSize: 11 }]}>
-              Photograph by {photo.author}
+              {t("photo.author", { author: photo.author ?? "" })}
             </Text>
           )}
           {!compact && (
             <>
               <Text style={[s.body, { fontSize: 11 }]}>
-                {photo.modificationNotes}
+                {t("photo.modifications", {
+                  notes: photo.modificationNotes ?? "",
+                })}
               </Text>
-              <SourceLink
-                url={photo.sourceUrl}
-                label="Photo source and author"
-              />
-              <SourceLink url={photo.originalUrl} label="Original photograph" />
-              <SourceLink url={photo.licenseUrl} label="Photo license" />
+              <SourceLink url={photo.sourceUrl} label={t("photo.source")} />
+              <SourceLink url={photo.originalUrl} label={t("photo.original")} />
+              <SourceLink url={photo.licenseUrl} label={t("photo.license")} />
             </>
           )}
         </View>
@@ -199,11 +198,12 @@ export function ImageGallery({
   images?: Photo[];
   name: string;
 }) {
+  const { t } = useLanguage();
   const { width } = useWindowDimensions();
   if (!images?.length) return null;
   return (
     <View style={{ marginTop: 18 }}>
-      <Text style={s.eyebrow}>MORE TO DISCOVER</Text>
+      <Text style={s.eyebrow}>{t("photo.more")}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -216,7 +216,7 @@ export function ImageGallery({
           >
             <PlaceImage
               photo={photo}
-              name={`${name}, gallery image ${index + 1}`}
+              name={t("photo.galleryAlt", { name, count: index + 1 })}
               style={{ width: "100%", height: 180, borderRadius: 18 }}
             />
           </View>
@@ -236,11 +236,12 @@ export function DestinationCard({
   onSave: () => void;
   onOpen: () => void;
 }) {
+  const { t, category } = useLanguage();
   return (
     <View style={s.card}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Discover ${item.name}`}
+        accessibilityLabel={t("accessibility.discover", { name: item.name })}
         onPress={onOpen}
       >
         <PlaceImage
@@ -251,7 +252,8 @@ export function DestinationCard({
         <View style={s.cardBody}>
           <View style={s.row}>
             <Text style={s.eyebrow}>
-              {item.country.toUpperCase()} · {item.category.toUpperCase()}
+              {item.country.toUpperCase()} ·{" "}
+              {category(item.category).toUpperCase()}
             </Text>
             {item.rating && <Text style={s.rating}>★ {item.rating}</Text>}
           </View>
@@ -261,7 +263,10 @@ export function DestinationCard({
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${saved ? "Unsave" : "Save"} ${item.name}`}
+        accessibilityLabel={t(
+          saved ? "accessibility.unsave" : "accessibility.save",
+          { name: item.name },
+        )}
         accessibilityState={{ selected: saved }}
         hitSlop={8}
         onPress={onSave}

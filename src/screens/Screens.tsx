@@ -22,12 +22,13 @@ import { filterDestinations, type Category } from "../data/destinations";
 import { useTravel } from "../state/TravelContext";
 import {
   Button,
-  DestinationCard,
   PlaceImage,
   ImageGallery,
+  SourceLink,
   s,
   colors,
 } from "../components/ui";
+import { DestinationFeed } from "../components/DestinationFeed";
 import { admissionLabels } from "../data/attractions";
 import {
   externalMapSearchUrl,
@@ -51,109 +52,113 @@ export function ExploreScreen() {
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState<Category>("All");
   const state = useTravel();
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParams>>();
   const items = filterDestinations(state.destinations, query, category);
   return (
-    <Page>
-      <View style={s.row}>
-        <Text style={s.eyebrow}>TRAVEL EXPLORER</Text>
-        <Ionicons name="earth-outline" color={colors.green} size={26} />
-      </View>
-      <Text style={s.title}>Find your next{"\n"}little escape.</Text>
-      <Text style={s.subtitle}>
-        Extraordinary places. Unforgettable moments.
-      </Text>
-      <View style={s.search}>
-        <Ionicons name="search-outline" color={colors.muted} size={21} />
-        <TextInput
-          accessibilityLabel="Search destinations or attractions"
-          placeholder="Where would you like to go?"
-          placeholderTextColor={colors.muted}
-          value={query}
-          onChangeText={setQuery}
-          style={s.input}
-          autoCorrect={false}
-        />
-        {query !== "" && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Clear search"
-            onPress={() => setQuery("")}
-            hitSlop={12}
-          >
-            <Ionicons name="close-circle" size={20} color={colors.muted} />
-          </Pressable>
-        )}
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 4 }}
-      >
-        {(["All", "Coast", "Culture", "City breaks"] as Category[]).map((c) => (
-          <Pressable
-            key={c}
-            accessibilityRole="button"
-            accessibilityState={{ selected: category === c }}
-            onPress={() => setCategory(c)}
-            style={[
-              s.pill,
-              category === c && { backgroundColor: colors.green },
-            ]}
-          >
-            <Text style={[s.pillText, category === c && { color: "white" }]}>
-              {c}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <View style={s.row}>
-        <Text style={s.section}>
-          {query ? "Search results" : "Places to fall in love with"}
-        </Text>
-        <Text style={s.body}>{items.length} places</Text>
-      </View>
-      {state.loading && (
-        <ActivityIndicator
-          accessibilityLabel="Loading destinations"
-          color={colors.green}
-        />
-      )}
-      {!!state.error && (
-        <View style={s.notice}>
-          <Text>{state.error}</Text>
-          <Button label="Try again" onPress={state.retry} />
-        </View>
-      )}
-      {!state.loading && items.length === 0 && (
-        <View style={s.empty}>
-          <Text style={s.cardTitle}>A new direction?</Text>
-          <Text style={s.body}>
-            Try another search or choose a different category.
+    <DestinationFeed
+      items={items}
+      header={
+        <>
+          <View style={s.row}>
+            <Text style={s.eyebrow}>TRAVEL EXPLORER</Text>
+            <Ionicons name="earth-outline" color={colors.green} size={26} />
+          </View>
+          <Text style={s.title}>Find your next{"\n"}little escape.</Text>
+          <Text style={s.subtitle}>
+            Extraordinary places. Unforgettable moments.
           </Text>
-          <Button
-            label="Reset filters"
-            onPress={() => {
-              setQuery("");
-              setCategory("All");
-            }}
-          />
-        </View>
-      )}
-      {items.map((item) => (
-        <DestinationCard
-          key={item.id}
-          item={item}
-          saved={state.saved.includes(item.id)}
-          onSave={() => state.toggleSaved(item.id)}
-          onOpen={() => navigation.navigate("Destination", { id: item.id })}
-        />
-      ))}
-      <Text style={[s.body, { textAlign: "center", fontSize: 12 }]}>
-        36 curated ideas · Practical information awaiting review
-      </Text>
-    </Page>
+          <View style={s.search}>
+            <Ionicons name="search-outline" color={colors.muted} size={21} />
+            <TextInput
+              accessibilityLabel="Search regions, countries, destinations or attractions"
+              placeholder="Try Tuscany, Spain or Prague"
+              placeholderTextColor={colors.muted}
+              value={query}
+              onChangeText={setQuery}
+              style={s.input}
+              autoCorrect={false}
+            />
+            {query !== "" && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+                onPress={() => setQuery("")}
+                hitSlop={12}
+              >
+                <Ionicons name="close-circle" size={20} color={colors.muted} />
+              </Pressable>
+            )}
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 4 }}
+          >
+            {(["All", "Coast", "Culture", "City breaks"] as Category[]).map(
+              (c) => (
+                <Pressable
+                  key={c}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: category === c }}
+                  onPress={() => setCategory(c)}
+                  style={[
+                    s.pill,
+                    category === c && { backgroundColor: colors.green },
+                  ]}
+                >
+                  <Text
+                    style={[s.pillText, category === c && { color: "white" }]}
+                  >
+                    {c}
+                  </Text>
+                </Pressable>
+              ),
+            )}
+          </ScrollView>
+          <View style={s.row}>
+            <Text style={s.section}>
+              {query ? "Search results" : "Places to fall in love with"}
+            </Text>
+            <Text style={s.body}>{items.length} places</Text>
+          </View>
+          {state.loading && (
+            <ActivityIndicator
+              accessibilityLabel="Loading destinations"
+              color={colors.green}
+            />
+          )}
+          {!!state.error && (
+            <View style={s.notice}>
+              <Text>{state.error}</Text>
+              <Button label="Try again" onPress={state.retry} />
+            </View>
+          )}
+        </>
+      }
+      empty={
+        !state.loading ? (
+          <View style={s.empty}>
+            <Text style={s.cardTitle}>A new direction?</Text>
+            <Text style={s.body}>
+              Try another search or choose a different category.
+            </Text>
+            <Button
+              label="Reset filters"
+              onPress={() => {
+                setQuery("");
+                setCategory("All");
+              }}
+            />
+          </View>
+        ) : undefined
+      }
+      footer={
+        <Text style={[s.body, { textAlign: "center", fontSize: 12 }]}>
+          {state.destinations.length} destinations ·{" "}
+          {state.destinations.reduce((n, d) => n + d.attractions.length, 0)}{" "}
+          guide entries · Editorial review pending
+        </Text>
+      }
+    />
   );
 }
 function Collection({ trips = false }: { trips?: boolean }) {
@@ -163,19 +168,25 @@ function Collection({ trips = false }: { trips?: boolean }) {
   const ids = trips ? state.trips : state.saved;
   const items = state.destinations.filter((d) => ids.includes(d.id));
   return (
-    <Page>
-      <Text style={s.eyebrow}>
-        {trips ? "MAKE ROOM FOR ADVENTURE" : "KEEP THE INSPIRATION"}
-      </Text>
-      <Text style={s.title}>
-        {trips ? "Your next chapter." : "Places you love."}
-      </Text>
-      <Text style={s.subtitle}>
-        {trips
-          ? "A simple shortlist for your future journeys."
-          : "All your someday places, together."}
-      </Text>
-      {items.length === 0 ? (
+    <DestinationFeed
+      items={items}
+      tripActions={trips}
+      header={
+        <View style={{ marginBottom: 24 }}>
+          <Text style={s.eyebrow}>
+            {trips ? "MAKE ROOM FOR ADVENTURE" : "KEEP THE INSPIRATION"}
+          </Text>
+          <Text style={s.title}>
+            {trips ? "Your next chapter." : "Places you love."}
+          </Text>
+          <Text style={s.subtitle}>
+            {trips
+              ? "A simple shortlist for your future journeys."
+              : "All your someday places, together."}
+          </Text>
+        </View>
+      }
+      empty={
         <View style={s.empty}>
           <Ionicons
             name={trips ? "briefcase-outline" : "heart-outline"}
@@ -197,38 +208,16 @@ function Collection({ trips = false }: { trips?: boolean }) {
             onPress={() => navigation.navigate("Home", { screen: "Explore" })}
           />
         </View>
-      ) : (
-        <View style={{ marginTop: 24 }}>
-          {items.map((item) => (
-            <View key={item.id}>
-              <DestinationCard
-                item={item}
-                saved={state.saved.includes(item.id)}
-                onSave={() => state.toggleSaved(item.id)}
-                onOpen={() =>
-                  navigation.navigate("Destination", { id: item.id })
-                }
-              />
-              {trips && (
-                <View style={{ marginTop: -14, marginBottom: 20 }}>
-                  <Button
-                    secondary
-                    label={`Remove ${item.name} from plan`}
-                    onPress={() => state.toggleTrip(item.id)}
-                  />
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
-      )}
-      {trips && (
-        <Text style={[s.body, { marginTop: 20 }]}>
-          Trip plans are local destination shortlists. Dates, bookings and
-          shared itineraries will come later.
-        </Text>
-      )}
-    </Page>
+      }
+      footer={
+        trips ? (
+          <Text style={[s.body, { marginTop: 20 }]}>
+            Trip plans are local destination shortlists. Dates, bookings and
+            shared itineraries will come later.
+          </Text>
+        ) : undefined
+      }
+    />
   );
 }
 export function SavedScreen() {
@@ -268,8 +257,10 @@ export function ProfileScreen() {
       <Text style={s.section}>A thoughtful travel note</Text>
       <Text style={s.body}>
         Opening times, prices and access rules can change. Check official venue
-        information before you travel. Images are original AI-generated travel
-        illustrations, not documentary location photographs.
+        information before you travel. Only reviewed authentic photographs can
+        be displayed. Neutral placeholders appear while rights or subject review
+        is outstanding. Automated metadata checks do not guarantee legal
+        compliance.
       </Text>
     </Page>
   );
@@ -297,6 +288,27 @@ export function DestinationScreen({
         {item.rating && <Text style={s.rating}>★ {item.rating}</Text>}
       </View>
       <Text style={s.subtitle}>{item.tagline}</Text>
+      <Text style={[s.body, { marginTop: 12 }]}>{item.region}</Text>
+      <Text style={[s.body, { fontSize: 12, marginTop: 8 }]}>
+        {item.coordinateLabel}.{" "}
+        {item.coordinatesVerifiedAt
+          ? "Sourced geographic overview, not an independently surveyed entrance."
+          : "Legacy overview point awaiting source review."}
+      </Text>
+      {item.coordinateAttribution && (
+        <Text style={[s.body, { fontSize: 11 }]}>
+          {item.coordinateAttribution} · Named point extracted; no venue
+          directions implied.
+        </Text>
+      )}
+      <SourceLink
+        url={item.coordinateSourceUrl}
+        label="Geographic overview source"
+      />
+      <SourceLink
+        url={item.coordinateLicenseUrl}
+        label="Geographic data license"
+      />
       <ImageGallery images={item.galleryImages} name={item.name} />
       <Text style={[s.body, { marginTop: 20 }]}>{item.description}</Text>
       <Button
@@ -416,7 +428,11 @@ export function AttractionScreen({
       {mapUrl ? (
         <Button
           secondary
-          label="Open location in Maps"
+          label={
+            a.coordinatePrecision === "town-overview"
+              ? "Open town overview in Maps"
+              : "Open location in Maps"
+          }
           onPress={() => void openUrl(mapUrl)}
         />
       ) : (
@@ -440,6 +456,20 @@ export function AttractionScreen({
             provider’s result before travelling.
           </Text>
         </>
+      )}
+      {a.coordinatesVerifiedAt && (
+        <View style={{ marginTop: 16 }}>
+          <Text style={s.body}>
+            Town overview checked against a named gazetteer record on{" "}
+            {a.coordinatesVerifiedAt}. This does not verify a walking route or
+            venue entrance.
+          </Text>
+          <Text style={[s.body, { fontSize: 11 }]}>
+            {a.coordinateAttribution}
+          </Text>
+          <SourceLink url={a.coordinateSourceUrl} label="Town point source" />
+          <SourceLink url={a.coordinateLicenseUrl} label="Town data license" />
+        </View>
       )}
       <Text style={s.section}>About this information</Text>
       <Text style={s.body}>

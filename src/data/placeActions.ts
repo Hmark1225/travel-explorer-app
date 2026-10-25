@@ -16,17 +16,46 @@ export function isReviewDate(value: string | null): boolean {
     parsed.toISOString().slice(0, 10) === value
   );
 }
+/** Evidence completeness checks only. They do not establish rights or legal compliance. */
+export function photoMetadataIssues(photo: Photo): string[] {
+  const issues: string[] = [];
+  if (photo.kind !== "photo" || photo.authenticity !== "photograph")
+    issues.push("No reviewed authentic photograph");
+  if (photo.reviewStatus !== "reviewed" || !photo.reviewedBy?.trim())
+    issues.push("Human rights/subject review missing");
+  for (const [label, value] of [
+    ["display URL", photo.url],
+    ["original URL", photo.originalUrl],
+    ["source page", photo.sourceUrl],
+    ["license URL", photo.licenseUrl],
+  ] as const)
+    if (!isHttpsUrl(value)) issues.push(`Missing or unsafe ${label}`);
+  if (!photo.author?.trim() || !photo.attribution?.trim())
+    issues.push("Author/attribution missing");
+  if (!photo.subject?.trim() || !isReviewDate(photo.subjectVerifiedAt))
+    issues.push("Subject evidence missing");
+  if (!isReviewDate(photo.verifiedAt))
+    issues.push("Rights review date missing");
+  if (photo.commercialUseAllowed !== true)
+    issues.push("Commercial-use approval missing");
+  if (
+    ![
+      "CC0-1.0",
+      "Public-domain",
+      "CC-BY-4.0",
+      "CC-BY-SA-4.0",
+      "Permission-granted",
+    ].includes(photo.license ?? "")
+  )
+    issues.push("License requires editorial policy review");
+  if (!photo.modificationNotes?.trim() || !photo.provenanceNotes?.trim())
+    issues.push("Provenance/modification record missing");
+  if (!photo.evidenceUrls?.length || !photo.evidenceUrls.every(isHttpsUrl))
+    issues.push("Evidence URLs missing or unsafe");
+  return issues;
+}
 export function isLicensedPhoto(photo: Photo): boolean {
-  return (
-    photo.kind === "photo" &&
-    photo.commercialUseAllowed === true &&
-    isHttpsUrl(photo.url) &&
-    !!photo.attribution?.trim() &&
-    !!photo.license?.trim() &&
-    isHttpsUrl(photo.licenseUrl) &&
-    isHttpsUrl(photo.sourceUrl) &&
-    isReviewDate(photo.verifiedAt)
-  );
+  return photoMetadataIssues(photo).length === 0;
 }
 export function verifiedCoordinates(
   place: Attraction,

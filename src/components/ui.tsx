@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import {
   Image,
+  Alert,
+  Linking,
   ScrollView,
   useWindowDimensions,
   type ViewStyle,
@@ -13,9 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import type { Destination, Photo } from "../data/destinations";
-import { imageSources } from "../assets/imageSources";
-import { atlasFrame, isBundledIllustration } from "../data/images";
-import { isLicensedPhoto } from "../data/placeActions";
+import { isHttpsUrl, isLicensedPhoto } from "../data/placeActions";
 export const colors = {
   ink: "#183D35",
   muted: "#75817B",
@@ -47,19 +47,52 @@ export function Button({
     </Pressable>
   );
 }
-/** A keyed frame resets load failures when a map selection or URL changes. */
+/** Plain metadata links; nested card presses do not navigate away as well. */
+export function SourceLink({
+  url,
+  label,
+}: {
+  url: string | null;
+  label: string;
+}) {
+  if (!isHttpsUrl(url)) return null;
+  return (
+    <Pressable
+      accessibilityRole="link"
+      onPress={(event) => {
+        event.stopPropagation();
+        void Linking.openURL(url).catch(() =>
+          Alert.alert(
+            "Couldn’t open source",
+            "Please try again when connected.",
+          ),
+        );
+      }}
+      style={{ paddingVertical: 8 }}
+    >
+      <Text
+        style={[
+          s.body,
+          {
+            fontSize: 12,
+            color: colors.green,
+            textDecorationLine: "underline",
+          },
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+/** Only reviewed authentic photographs can render. Missing/failed photos stay neutral. */
 export function PlaceImage(props: {
   photo?: Photo | null;
   name: string;
   style: StyleProp<ImageStyle>;
   compact?: boolean;
 }) {
-  const identity = JSON.stringify([
-    props.photo?.assetId,
-    props.photo?.crop,
-    props.photo?.url,
-  ]);
-  return <ImageFrame key={identity} {...props} />;
+  return <ImageFrame key={props.photo?.url ?? "no-photo"} {...props} />;
 }
 function ImageFrame({
   photo,
@@ -73,45 +106,20 @@ function ImageFrame({
   compact?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  const illustration = !!photo && isBundledIllustration(photo);
-  const source =
-    illustration && photo?.assetId
-      ? imageSources[photo.assetId]
-      : photo && isLicensedPhoto(photo) && photo.url
-        ? { uri: photo.url, cache: "force-cache" as const }
-        : null;
-  const available = source !== null && !failed;
-  const resolved =
-    typeof source === "number" ? Image.resolveAssetSource(source) : null;
-  const frame =
-    resolved?.width && resolved?.height && photo?.crop
-      ? atlasFrame(
-          size.width,
-          size.height,
-          resolved.width,
-          resolved.height,
-          photo.crop,
-        )
-      : null;
+  const available = !!photo && isLicensedPhoto(photo) && !!photo.url && !failed;
   return (
     <View>
       <View
         accessible
         accessibilityRole="image"
         accessibilityLabel={
-          available ? photo?.altText || name : `Image unavailable for ${name}`
-        }
-        onLayout={({ nativeEvent: { layout } }) =>
-          setSize((old) =>
-            old.width === layout.width && old.height === layout.height
-              ? old
-              : { width: layout.width, height: layout.height },
-          )
+          available
+            ? photo.altText || photo.subject || name
+            : `No reviewed photograph available for ${name}`
         }
         style={[
           style as StyleProp<ViewStyle>,
-          { overflow: "hidden", backgroundColor: "#D8E4DD" },
+          { overflow: "hidden", backgroundColor: "#E6EBE7" },
         ]}
       >
         <View
@@ -130,53 +138,56 @@ function ImageFrame({
           <Ionicons
             name="image-outline"
             size={compact ? 26 : 38}
-            color={colors.green}
+            color={colors.muted}
           />
           {!compact && (
             <Text style={[s.body, { fontSize: 12, textAlign: "center" }]}>
-              {failed ? "Image unavailable" : "A place to discover"}
+              {failed ? "Photo unavailable" : "Photo awaiting review"}
             </Text>
           )}
         </View>
-        {available &&
-          source &&
-          (!illustration || (size.width > 0 && frame !== null)) && (
-            <Image
-              source={source}
-              accessible={false}
-              resizeMode="cover"
-              onError={() => setFailed(true)}
-              style={
-                frame
-                  ? { position: "absolute", ...frame }
-                  : {
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                    }
-              }
-            />
-          )}
+        {available && (
+          <Image
+            source={{ uri: photo.url!, cache: "force-cache" }}
+            accessible={false}
+            resizeMode="cover"
+            onError={() => setFailed(true)}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
+        )}
       </View>
-      {available && photo?.attribution && (
-        <Text
-          numberOfLines={compact ? 2 : undefined}
-          style={[
-            s.body,
-            {
-              fontSize: 10,
-              lineHeight: 15,
-              marginTop: 5,
-              marginHorizontal: compact ? 0 : 2,
-            },
-          ]}
-        >
-          {photo.kind === "illustration" ? "Illustration · " : ""}
-          {photo.attribution}
-          {photo.kind === "photo" && photo.license ? ` · ${photo.license}` : ""}
-        </Text>
+      {available && (
+        <View>
+          <Text
+            style={[s.body, { fontSize: 11, lineHeight: 16, marginTop: 6 }]}
+          >
+            {photo.attribution} · {photo.license}
+          </Text>
+          {!compact && (
+            <Text style={[s.body, { fontSize: 11 }]}>
+              Photograph by {photo.author}
+            </Text>
+          )}
+          {!compact && (
+            <>
+              <Text style={[s.body, { fontSize: 11 }]}>
+                {photo.modificationNotes}
+              </Text>
+              <SourceLink
+                url={photo.sourceUrl}
+                label="Photo source and author"
+              />
+              <SourceLink url={photo.originalUrl} label="Original photograph" />
+              <SourceLink url={photo.licenseUrl} label="Photo license" />
+            </>
+          )}
+        </View>
       )}
     </View>
   );
@@ -200,7 +211,7 @@ export function ImageGallery({
       >
         {images.map((photo, index) => (
           <View
-            key={`${photo.assetId ?? photo.url}:${index}`}
+            key={`${photo.url ?? photo.subject ?? "placeholder"}:${index}`}
             style={{ width: Math.min(width - 72, 420) }}
           >
             <PlaceImage

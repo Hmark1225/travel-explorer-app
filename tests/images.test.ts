@@ -1,107 +1,94 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, statSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { destinations } from "../src/data/destinations.ts";
+import { neutralPhoto } from "../src/data/media.ts";
 import {
-  atlasFrame,
-  guideIllustration,
-  illustrationAssets,
-  illustrationOrder,
-  isBundledIllustration,
-} from "../src/data/images.ts";
-import { isLicensedPhoto } from "../src/data/placeActions.ts";
-
-test("all 3 destinations and 36 attractions have credited, described hero images", () => {
-  for (const d of destinations) {
-    assert.ok(d.galleryImages?.length);
-    for (const place of [d, ...d.attractions]) {
-      assert.ok(
-        isBundledIllustration(place.heroImage) ||
-          isLicensedPhoto(place.heroImage),
-      );
-      assert.ok(place.heroImage.altText);
-      assert.ok(place.heroImage.attribution);
-      assert.ok(place.heroImage.sourceDescription || place.heroImage.sourceUrl);
-      assert.deepEqual(place.photo, place.heroImage);
-      for (const photo of place.galleryImages ?? [])
-        assert.ok(isBundledIllustration(photo) || isLicensedPhoto(photo));
-    }
+  isLicensedPhoto,
+  photoMetadataIssues,
+} from "../src/data/placeActions.ts";
+import type { Photo } from "../src/data/models";
+const slots = destinations.flatMap((d) => [d, ...d.attractions]);
+test("all 174 hero slots are neutral pending review, with no generated artwork shipped", () => {
+  assert.equal(slots.length, 174);
+  for (const entry of slots) {
+    assert.equal(entry.heroImage.kind, "placeholder");
+    assert.equal(entry.heroImage.url, null);
+    assert.equal(entry.heroImage.verifiedAt, null);
+    assert.ok(entry.heroImage.altText);
+    assert.deepEqual(entry.photo, entry.heroImage);
+    assert.equal(isLicensedPhoto(entry.heroImage), false);
+    for (const p of entry.galleryImages ?? [])
+      assert.ok(p.kind === "placeholder" || isLicensedPhoto(p));
   }
-});
-test("every attraction has its own stable tile and assignments survive reordering", () => {
-  for (const d of destinations) {
-    const tiles = new Set<string>();
-    assert.deepEqual(
-      [...illustrationOrder[d.id as keyof typeof illustrationOrder]].sort(),
-      d.attractions.map((a) => a.id).sort(),
+  for (const filename of ["rhodes.jpg", "rome.jpg", "budapest.jpg"])
+    assert.equal(
+      existsSync(new URL(`../assets/guides/${filename}`, import.meta.url)),
+      false,
     );
-    for (const a of [...d.attractions].reverse()) {
-      const p = a.heroImage;
-      assert.equal(p.assetId, `${d.id}-guide`);
-      const key = `${p.crop?.row}:${p.crop?.column}`;
-      assert.ok(!tiles.has(key));
-      tiles.add(key);
-    }
-    assert.equal(tiles.size, 12);
-  }
 });
-test("bundled image files exist, are JPEGs, and stay within the mobile payload budget", () => {
-  let total = 0;
-  for (const key of Object.keys(illustrationAssets)) {
-    const path = new URL(
-      `../assets/guides/${key.replace("-guide", "")}.jpg`,
-      import.meta.url,
+// Deliberately synthetic metadata. This does not represent a verified real photo.
+const fixture: Photo = {
+  ...neutralPhoto("Test"),
+  kind: "photo",
+  url: "https://example.com/display.jpg",
+  originalUrl: "https://example.com/original.jpg",
+  author: "Example photographer",
+  attribution: "Example photographer, CC BY 4.0",
+  sourceUrl: "https://example.com/source",
+  license: "CC-BY-4.0",
+  licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  commercialUseAllowed: true,
+  verifiedAt: "2026-10-25",
+  authenticity: "photograph",
+  subject: "Test fixture only",
+  subjectVerifiedAt: "2026-10-25",
+  modificationNotes: "None",
+  provenanceNotes: "Synthetic test evidence only",
+  reviewedBy: "Test reviewer",
+  reviewStatus: "reviewed",
+  evidenceUrls: ["https://example.com/source"],
+};
+test("photo gate requires recorded human review, authentic subject and complete provenance", () => {
+  assert.ok(isLicensedPhoto(fixture));
+  assert.deepEqual(photoMetadataIssues(fixture), []);
+  for (const mutation of [
+    { author: null },
+    { attribution: null },
+    { originalUrl: null },
+    { sourceUrl: null },
+    { url: "http://example.com/a.jpg" },
+    { licenseUrl: null },
+    { verifiedAt: "2026-02-30" },
+    { subject: null },
+    { subjectVerifiedAt: null },
+    { authenticity: "unknown" },
+    { commercialUseAllowed: false },
+    { reviewedBy: null },
+    { reviewStatus: "needs-review" },
+    { modificationNotes: null },
+    { provenanceNotes: null },
+    { evidenceUrls: [] },
+    { license: "CC-BY-NC-4.0" },
+    { kind: "illustration" },
+  ])
+    assert.equal(
+      isLicensedPhoto({ ...fixture, ...mutation } as Photo),
+      false,
+      JSON.stringify(mutation),
     );
-    const bytes = readFileSync(path);
-    assert.equal(bytes[0], 0xff);
-    assert.equal(bytes[1], 0xd8);
-    const size = statSync(path).size;
-    assert.ok(size > 50000 && size < 700000);
-    total += size;
-  }
-  assert.ok(total < 2_000_000);
 });
-test("missing URLs and invalid local tiles are rejected so the renderer uses a placeholder", () => {
-  const p = guideIllustration("rhodes", 0, "Rhodes");
-  assert.ok(isBundledIllustration(p));
-  assert.equal(isLicensedPhoto({ ...p, kind: "photo", url: null }), false);
-  assert.equal(isBundledIllustration({ ...p, assetId: undefined }), false);
+test("unsafe source and evidence URLs fail closed rather than making a legal-compliance claim", () => {
   assert.equal(
-    isBundledIllustration({
-      ...p,
-      crop: { column: 3, row: 0, columns: 3, rows: 4 },
-    }),
+    isLicensedPhoto({ ...fixture, sourceUrl: "javascript:alert(1)" }),
     false,
   );
   assert.equal(
-    isBundledIllustration({
-      ...p,
-      crop: { column: 0, row: 4, columns: 3, rows: 4 },
+    isLicensedPhoto({
+      ...fixture,
+      evidenceUrls: ["https://user:password@example.com/"],
     }),
     false,
   );
-  assert.equal(
-    isBundledIllustration({
-      ...p,
-      crop: { column: 0.5, row: 0, columns: 3, rows: 4 },
-    }),
-    false,
-  );
-  assert.equal(isBundledIllustration({ ...p, altText: "" }), false);
-});
-test("responsive crop geometry fills the viewport and excludes neighboring panels", () => {
-  for (const width of [240, 342, 720])
-    for (const height of [80, 150, 290])
-      for (let i = 0; i < 12; i++) {
-        const crop = guideIllustration("rome", i, "Rome").crop!;
-        const f = atlasFrame(width, height, 1024, 1536, crop);
-        const scale = f.width / 1024;
-        const left = f.left + (crop.column * (1024 / 3) + 2) * scale;
-        const top = f.top + (crop.row * 384 + 2) * scale;
-        const right = left + (1024 / 3 - 4) * scale,
-          bottom = top + 380 * scale;
-        assert.ok(left <= 0.00001 && top <= 0.00001);
-        assert.ok(right >= width - 0.00001 && bottom >= height - 0.00001);
-        assert.ok(Number.isFinite(f.width) && f.width > 0);
-      }
+  assert.ok(photoMetadataIssues(neutralPhoto("Missing")).length > 0);
 });

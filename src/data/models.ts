@@ -11,21 +11,29 @@ export type AttractionCategory =
   | "Local experiences"
   | "Wellness";
 export type AdmissionType = "free" | "paid" | "varies" | "unknown";
+/** Metadata is an editorial record, not an automated guarantee of legal compliance. */
 export interface Photo {
-  kind: "placeholder" | "photo" | "illustration";
+  kind: "placeholder" | "photo";
+  url: string | null;
   altText?: string;
   caption?: string;
   sourceDescription?: string;
-  assetId?: "rhodes-guide" | "rome-guide" | "budapest-guide";
-  /** Tile in a bundled image sheet; rendering crops without extra downloads. */
-  crop?: { column: number; row: number; columns: number; rows: number };
-  url: string | null;
   attribution: string | null;
+  author: string | null;
+  originalUrl: string | null;
   license: string | null;
   commercialUseAllowed: boolean | null;
   licenseUrl: string | null;
   sourceUrl: string | null;
   verifiedAt: string | null;
+  authenticity: "photograph" | "unknown";
+  subject: string | null;
+  subjectVerifiedAt: string | null;
+  modificationNotes: string | null;
+  provenanceNotes: string | null;
+  reviewedBy: string | null;
+  evidenceUrls: string[];
+  reviewStatus: "needs-review" | "reviewed";
 }
 export interface Attraction {
   id: string;
@@ -41,6 +49,10 @@ export interface Attraction {
   longitude: number | null;
   coordinatesVerifiedAt: string | null;
   coordinateSourceUrl: string | null;
+  coordinatePrecision: "town-overview" | "entrance" | null;
+  coordinateAttribution: string | null;
+  coordinateLicenseUrl: string | null;
+  coordinateRecordId: string | null;
   officialWebsite: string | null;
   officialWebsiteVerifiedAt: string | null;
   usefulTips: string[];
@@ -62,6 +74,19 @@ export interface Destination {
   id: string;
   name: string;
   country: string;
+  countryCode: string;
+  region: string;
+  searchAliases: string[];
+  sourceIds: SourceId[];
+  sourceUrls: string[];
+  reviewStatus: "needs-review" | "reviewed";
+  lastVerifiedAt: string | null;
+  coordinateLabel: string;
+  coordinateSourceUrl: string | null;
+  coordinateAttribution: string | null;
+  coordinateLicenseUrl: string | null;
+  coordinateRecordId: string | null;
+  coordinatesVerifiedAt: string | null;
   category: Exclude<Category, "All">;
   tagline: string;
   description: string;

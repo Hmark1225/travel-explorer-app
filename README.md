@@ -1,92 +1,89 @@
 # Travel Explorer
 
-An English-language iOS and Android travel discovery app built with Expo SDK 58, React Native and TypeScript. Warm ivory surfaces, forest-green accents, generous typography and original travel illustrations frame a curated collection of 36 guide entries.
+An English-language Expo SDK 58 / React Native / TypeScript app for iOS and Android, with Explore, Map, Saved, Trips and Profile tabs. The offline guide now contains **18 destinations and 156 authored attractions/experiences**. The original three destinations retain 12 entries each; the 15 additions have eight each.
 
-## Run with Expo Go
+**Editorial status:** no travel entry or destination summary is fully source-reviewed. Official tourism and Wikimedia requests were blocked in this environment. There are **zero reviewed photographs**, so all 174 hero slots show neutral placeholders. Previous AI-generated images have been removed. Fifteen new destination overview points and 12 town-walk overview points were extracted from named, checksum-pinned gazetteer records; these do **not** verify venue entrances, walking routes, current operations or admission.
 
-Use Node.js 24 (the version validated here) and npm. Install the current **Expo Go** app on your iPhone or Android phone; it must support SDK 58.
+See [the per-destination inventory](docs/content-audit.md), [machine-readable content/photo inventory](docs/content-inventory.json), [editorial checklist](docs/editorial-review.md) and [geography provenance](docs/geography-sources.md). Authoring complete does not mean editorial review or commercial publication clearance is complete.
+
+## Run in Expo Go
+
+Use Node.js 24 and npm. Install Expo Go compatible with **SDK 58** on your iPhone or Android device.
 
 ```sh
 npm ci
 npx expo start --go
 ```
 
-Keep your computer and phone on the same Wi-Fi network. Scan the terminal QR code with Camera on iOS or the scanner in Expo Go on Android. Allow local network access if prompted. No Apple developer account, backend credentials or Android Studio is needed for Expo Go. If the installed Expo Go release does not yet support SDK 58, use a compatible Expo Go build from Expo's official downloads where available, or an SDK 58 development build.
+On the same local network, scan the QR code with Camera on iOS or Expo Go on Android, and allow local-network access when prompted. A cloud localhost address is not a phone-accessible preview. For a remote host, use a permitted Expo tunnel (`npx expo start --go --tunnel`) or run a local checkout. Tunneling may require Expo's optional tunnel tool and network permission; it has not been tested here. If the installed Expo Go does not support SDK 58, use an official compatible client where available or a matching development build.
 
-From a remote/cloud machine, LAN addresses generally cannot be reached by your phone. Run locally, or use `npx expo start --go --tunnel` when your environment permits Expo tunnel traffic (the CLI may offer to install `@expo/ngrok`). A tunnel needs network access and has not been verified in this environment. Do not treat an internal localhost address as a phone-accessible preview.
+`npm run android` opens an available Android emulator. `npm run ios` needs macOS and an installed iOS Simulator. No paid API, external database, backend credential or sign-in is required. The app targets mobile; web maps are not implemented.
 
-`npm run android` opens an available Android emulator; `npm run ios` requires macOS and an installed iOS Simulator. Native device/emulator validation is still required before release. The app targets mobile; a web map implementation is not included.
+## What to try
 
-## Try the app
+- Search destinations, countries and regions locally: `Spain`, `Tuscany`, `Central Europe`, `Firenze`, `Czech Republic`, `Türkiye`, `Ile de France`, `Soller`, or `France Louvre`. Country codes such as `GR` work as exact country queries. Combine a query with Coast, Culture or City breaks. Search ignores accents and matches word prefixes, so `Rome` does not match the middle of another word.
+- Open all 18 destination guides. Explore the eight new entries in each addition and the 12 retained entries in Rhodes, Rome and Budapest. Read descriptions, tips, approximate editorial durations and review status. No prices, hours, ratings, bookings or live availability are invented.
+- Save destinations and add/remove trip-plan stops. These are local destination shortlists, not bookings or dated itineraries. Existing `travel-explorer:v1` Saved/Trips arrays and all original IDs are preserved; there is no data reset or migration.
+- On Map, green pins are destination overviews. Amber pins represent sourced town overviews, **not venue entrances or verified routes**. Coincident town/destination points share the destination pin; the town walk remains reachable through its guide. Islands and the Amalfi Coast use explicitly named town anchors, not asserted region centroids. The original three destination pins remain labelled legacy points pending source review.
+- Unverified venues can be searched by name in external Maps; broad experiences search only their destination area. Sourced town walks can open their overview point. Confirm provider results before travelling. Official venue website actions remain unavailable until their URLs are reviewed.
 
-1. **Explore:** view Rhodes, Rome and Budapest. Search `Rome`, `Hungary` or `Lindos`; combine search with Coast, Culture or City breaks. Try an unmatched query and reset filters.
-2. Open a destination, review its description, scroll through all 12 entries and open attraction details and navigate back using the header or Android back button.
-3. Tap a heart, then open **Saved**. Unsave it and verify the empty state. Save another destination.
-4. Tap **Add to trip plan** in a destination. Open **Trips**, view the destination and remove a stop. Trip plans are destination shortlists, not bookings or dated itineraries.
-5. **Map:** pan and zoom the native map, tap the Rome or Budapest marker, then open the selected destination. Map tiles need internet access; no device location permission is requested.
-6. **Profile:** check the guest profile and Saved/Trips counts. Close and reopen the app to confirm saved destinations and trip stops persist on that device.
-7. Repeat on iOS and Android, including a small screen and increased system text size. Check scrolling, tab navigation and screen-reader button labels.
-
-All 39 hero-image slots (3 destinations and 36 entries) use original, clearly credited AI-generated travel illustrations. Each attraction has its own scene, and destination details also show a small gallery. These are artistic interpretations, not documentary photographs. Native basemap tiles require internet; bundled guide information and local collections do not require a backend. All 36 entries await official-source review; admission is explicitly unknown and exact place coordinates and official website actions remain unavailable; clearly labelled external map searches are available. No sign-in, remote sync, booking or real-time travel data is implemented.
-
-## Checks
+## Checks and audit tools
 
 ```sh
 npm run typecheck
 npm test
-npm run export:check
-npx expo install --check
+EXPO_OFFLINE=1 npm run export:check
+npm run audit:content -- --check
 ```
 
-The Node test runner requires Node 22.18+ (Node 24 recommended). Tests exercise data completeness, destination/attraction identity, search normalization, attraction/country search and combined category filters. Export checks compile and bundle both native platforms; they do not replace device interaction testing. When Expo's metadata endpoints are restricted, `EXPO_OFFLINE=1 npx expo install --check` uses the SDK's bundled compatibility table, and `EXPO_OFFLINE=1 npm run export:check` bundles without metadata requests.
+Tests cover counts, global IDs, preservation of all 36 original editorial records, source/review distinctions, search, geography bounds/provenance, rejection of ambiguous geography and photo metadata policy. Native Hermes exports compile both iOS and Android; they do not establish device behavior or legal compliance. No dependency or lockfile upgrades were made.
 
-## Project layout and Supabase path
+To inspect or regenerate the content/photo audit:
 
-- `App.tsx`: typed native stack and five bottom tabs.
-- `src/screens/`: discovery, collections, profile, native map and details screens.
-- `src/components/ui.tsx`: shared visual primitives and theme.
-- `src/data/destinations.ts`: destination records and pure search/filter logic. `models.ts`, `attractions.ts`, `sources.ts` and `placeActions.ts` hold the guide schema, editorial content, review leads and verified-action guards.
-- `src/services/travelRepository.ts`: asynchronous repository contract and mock adapter. Screens consume context rather than importing mock records.
-- `src/state/TravelContext.tsx`: loading/error handling and device-local Saved/Trips persistence using AsyncStorage.
-- `tests/`: data and filtering checks.
+```sh
+npm run audit:content
+npm run audit:content -- --write
+```
 
-For Supabase, implement `TravelRepository.listDestinations()` using a separate Supabase client and map database rows into the existing `Destination` shape. Use destination and attraction tables with stable IDs and a destination foreign key. Add authenticated saved-destination and trip-stop tables and a separate collection repository before replacing local storage. Apply row-level security scoped to `auth.uid()`, add migration files and loading/error integration tests. Future public client configuration can use `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; public Expo variables are bundled into the app. Never put a service-role key in the mobile app. No Supabase dependency or credentials are required for this local guide.
+The audit reports authored versus reviewed entries, geographic scope, photo provenance and outstanding metadata. It does not authenticate a photograph, identify its actual author or determine copyright, privacy, property, trademark or commercial-use rights.
 
-## Content management workflow
+Geographic extracts can be checked or reproduced with Python's standard library:
 
-See [the content review ledger](docs/content-review.md) for every entry and its outstanding checks. The 36 original English descriptions are editorial drafts based on general place knowledge, **not live research results**. Official tourism requests returned proxy HTTP 403 during preparation on 2026-10-25. `sourceUrls` are candidate official research leads, usually homepages, not claim-level citations. `lastVerifiedAt` is null for every entry. Durations are explicitly editorial planning estimates, not verified operating facts. There are no numeric admission prices, opening hours, availability promises or travel ratings.
+```sh
+python3 scripts/import_geography.py --check
+python3 scripts/import_geography.py
+```
 
-1. Edit `src/data/attractions.ts`. Preserve the six original attraction IDs (`rhodes-old-town`, `lindos`, `colosseum`, `trevi`, `bastion`, `szechenyi`) and all destination IDs. Never reset the `travel-explorer:v1` storage key or mutate Saved/Trips to publish content. Local collections still store destination ID arrays; no storage migration is required.
-2. Research the official tourism, monument, museum or operator sites listed in `src/data/sources.ts`. Open the actual relevant pages; replace homepage leads with exact supporting URLs only after visiting them. Add source IDs to the entry and document which fields each source supports in the review ledger. A successful HTTP response alone does not verify a claim. Record redirects, conflicting guidance and unavailable evidence rather than guessing.
-3. Confirm descriptions, accessibility advice and admission classification (`free`, `paid`, `varies`, `unknown`). Keep `unknown` when evidence is missing. Do not infer admission policy from a building’s public location. Experiences such as neighborhood walks or meals are labelled as self-guided categories, not named vendors, bookable products or guaranteed services. Keep hours and prices out unless there is a future dated maintenance process.
-4. For an individual place, obtain its visitor entrance coordinates from authoritative published location information, corroborate them on a map and check latitude/longitude order and bounds. Save both coordinates, `coordinateSourceUrl` and `coordinatesVerifiedAt` together. Otherwise keep them null. Do not place a single exact pin on a broad neighborhood/food experience unless its defined starting point has been reviewed. `verifiedCoordinates()` gates both place markers and external map links. Existing green destination markers are retained overview points, **not newly verified entrances**. No new attraction pin is currently enabled.
-5. Confirm the operator’s HTTPS website and destination after redirects. Set `officialWebsite` and `officialWebsiteVerifiedAt` only after review; otherwise keep both null. The app shows an official website action only for reviewed HTTPS links. Exact-location map actions open Apple Maps on iOS or Google Maps on Android only for reviewed coordinates. Unreviewed places offer a clearly labelled name search instead; broad experiences search only the destination area, not a fictional vendor. Search results are not verified entrances or routes. Link failures display a recoverable alert.
-6. After all factual fields have been reviewed, set `reviewStatus` to `reviewed` and `lastVerifiedAt` to the actual ISO review date (`YYYY-MM-DD`), not the authoring date. Keep unresolved fields unknown. Update the ledger with per-field evidence and reviewer notes. Revisit dynamic admission/access guidance before each content release and whenever a source changes.
-7. Keep the bundled original illustrations, or add a location-specific photo only after confirming its commercial-use license. Record the original source page, photographer/required attribution, license name, license URL, image URL, explicit `commercialUseAllowed: true` and rights review date in `heroImage` (and any `galleryImages`). Keep `photo` as the legacy hero alias. Check license conditions (including required attribution and modification restrictions) and the actual subject depicted. Do not copy images from tourism sites just because the text is public, and do not use unrelated stock as the location. `PlaceImage` accepts the registered bundled artwork, or a remote photo with complete rights metadata. Missing, invalid or failed images show a styled placeholder. Its `image` legacy alias should match the reviewed photo URL. Attribution is rendered beneath photographs.
-8. Run `npm run typecheck`, `npm test` and `EXPO_OFFLINE=1 npm run export:check`. Review the diff, perform the physical-device checklist below and submit a content PR. The asynchronous `TravelRepository.listDestinations()` contract and legacy `description`, `duration`, `price`, `image` read fields remain available; do not bypass that service with screen-level data imports.
+The importer uses pinned source commits, SHA-256 checks and unique name-and-country matches. It uses a matching cache when present or downloads the same pinned data. A checksum proves file identity, not real-world accuracy. Source or matcher changes need editorial review; never substitute a similarly named town automatically.
 
-## Device regression checklist for this change
+## Content architecture
 
-The previous version passed seven core iPhone functional tests (reported by the owner); that is the baseline, not verification of this branch. Re-run the original seven checks on an **existing installation with saved data**, then:
+- `src/data/content/<destination>.ts`: one editable module per destination; namespaced new IDs and original IDs retained unchanged.
+- `src/data/builders.ts`: common defaults and legacy read aliases (`description`, `duration`, `price`, `photo`, `image`); missing facts remain unknown/null.
+- `src/data/destinations.ts`: ordered registry and compatible exports. `TravelRepository.listDestinations(): Promise<Destination[]>` is unchanged; screens still read through context.
+- `src/data/search.ts`: a weakly cached, accent-insensitive index of names, region, country, aliases and attraction names. Treat published data objects as immutable; replace an object rather than mutating it in place.
+- `src/data/sources.ts`: candidate official research leads with access status, not citations for claims that have not been reviewed.
+- `src/data/geography.ts`: narrow named-record extracts with source snapshots, hashes, attribution and record identifiers. `coordinatesVerifiedAt` means checked against the recorded geographic source; `lastVerifiedAt` is the separate travel-content review date.
+- `src/data/media.ts` and `placeActions.ts`: neutral photo defaults, evidence-completeness checks and guarded external links.
+- `src/components/DestinationFeed.tsx`: virtualized Explore, Saved and Trips lists. The initial render and batch sizes are bounded; there is no vertical ScrollView nesting. Detail pages render only their current destination's 8–12 entries.
+- `src/state/TravelContext.tsx`: unchanged local persistence and loading/error handling. No Supabase integration or paid service was added.
 
-- Confirm Saved and Trips retain prior destinations after an update and after closing/reopening the app. Verify save/unsave and add/remove still work.
-- For each destination, scroll through all 12 cards, open the first, middle and final entries, and go back. Check category, illustration label, summary, estimated duration, detailed text and tips. Verify `lindos`, `trevi` and `szechenyi` still resolve through the existing detail routes.
-- Confirm all current entries explicitly show unverified admission, website and location status; no fabricated price, star rating or “last verified” date appears. Verify all illustrations load from bundled assets without image network requests.
-- Search `Lindos`, `Hungary` and `Rome`, combine category filters and test empty results. Open a newly added destination result through its attraction-name search.
-- On Map, confirm all three original green destination markers still open their destinations. This content release intentionally has **zero** reviewed attraction markers. When a future entry is reviewed, check its amber pin, selected-place panel and attraction navigation; verify the exact location externally before publishing it.
-- Try the current name-search/area-search map buttons on both platforms and confirm the UI does not claim a reviewed entrance. After adding an actually reviewed entry, test “Open official website” and “Open location in Maps” on both platforms, including returning to the app and handling a failed link. The guarded positive path is unit-tested with synthetic coordinates only; it has not been tried on a device.
-- Check long names and tips on a small screen, large system text, VoiceOver/TalkBack and Android hardware back. Verify iOS safe areas and portrait scrolling. Map imagery needs a connection; editorial content and collection persistence do not.
+## Authentic photography policy
 
-## Validation scope
+Only authentic photographs with a recorded subject and rights review can be published. Use neutral placeholders until evidence is available; do not use AI-generated images or an unrelated photo as the location. Current `heroImage: Photo` objects are placeholders, and optional `galleryImages` arrays are empty. The legacy `photo` field aliases the hero; `image` is its remote URL or null.
 
-This branch retains Expo SDK 58 and changes no dependencies, lockfile, Supabase configuration or paid services. Automated validation covers data completeness, stable identities, category coverage, references, coordinate/website guards, image rights metadata, unique image assignments, crop geometry and the asset payload budget. Native bundle exports verify compilation, not maps, external app launches or persistent storage on a physical device. Current test and export results are reported in the PR; device checks above remain pending.
+A photo record stores the display URL, original URL, source page, author, credit, license identifier and URL, commercial-use review decision, subject and subject-review date, rights-review date, reviewer, evidence URLs, provenance notes and modification notes (including an explicit `None` if unchanged). Prefer public-domain, CC0 or suitable commercial-use licenses. The publication gate recognizes a small documented policy set; adding other licenses needs human review rather than changing a flag to force display. Share-alike obligations and attribution conditions still apply where relevant.
 
-## Images
+`PlaceImage` rejects incomplete records, keeps a neutral frame while loading, handles native load errors and resets failure state on URL changes. Reviewed photos show credit/author, modification information, and links to the source and license in the app; detail pages expose the full credit context even when a compact preview is used. Remote photos should be pre-sized for mobile (normally at most 1200 px wide, aiming for 250 KB or less), without stripping or obscuring required attribution. Do not bundle original oversized downloads or load a whole remote gallery eagerly. Metadata tests are a release aid, **not a guarantee of legal compliance or photographic authenticity**.
 
-`heroImage: Photo` is required on each destination and attraction; `galleryImages?: Photo[]` is optional. Image metadata includes `altText`, optional `caption`, `attribution`, `sourceDescription`/`sourceUrl`, and rights information. `photo` remains a hero alias and `image` remains the legacy remote-URL alias (null for bundled artwork). Current artwork is original AI-generated travel illustration, labelled as such, with no third-party location photography or external image service. Asset dates describe artwork creation/review, **not verification of travel facts**.
+## Physical-device regression checklist
 
-Three JPEG sheets in `assets/guides/` provide 36 separate scenes for about **1.7 MiB total** (each under 600 KiB, 1024 × 1536). `src/data/images.ts` maps stable attraction IDs to tiles; `src/assets/imageSources.ts` uses static `require` calls so Expo Go bundles and caches images offline. The renderer crops at display time, hides neighboring panels, preserves the image frame while loading, and resets error state when its source changes. No new dependency is needed. Remote photos still require the existing commercial-use and attribution checks; keep them HTTPS, resize before publishing and aim for at most 1200 pixels wide and 250 KB per image. Add a static require for any new local sheet, and update its metadata, ID assignments and asset-budget tests.
+These checks remain pending on this branch; the previously reported seven iPhone tests describe the earlier version only.
 
-Explore, Saved and Trips share the same destination-card renderer. Detail pages share hero/gallery rendering, and Map uses a compact image preview to preserve map space on small phones. Every image has an alt label and visible credit. An absent/invalid source or native `onError` produces a styled fallback rather than a broken image. Artwork is deliberately illustrative; a depicted pool, animal, interior or view does not promise a facility or experience is available.
-
-Image regression checks in Expo Go on iPhone: view all three Explore heroes, all 36 attraction images, destination galleries, Saved/Trips and map previews; restart to confirm collections persist; check long credits and large text on a small screen. After the bundle is cached, turn off networking to confirm artwork remains visible (basemap tiles may disappear). For a developer fallback check, use a temporary valid-rights remote fixture with an unreachable HTTPS image URL, confirm `onError` shows the placeholder, then switch the source and confirm the new image loads. Empty gallery arrays must not leave empty sections. Device-level rendering and image-error checks are still pending; automated tests and exports do not substitute for these.
+1. Update an existing installation with saved destinations and trip stops. Confirm they survive the update and restart; test saving/removing both old and new destinations.
+2. Scroll Explore through all 18 destinations; search region, country, aliases and attractions; combine filters and reset an empty result. Confirm the keyboard and input remain usable while typing and the lists do not jump or nest-scroll unexpectedly.
+3. Open the first, middle and last entry of every guide, including the last-added Istanbul guide. Check all 8/12 entries, English copy, durations, tips, review labels and back navigation. Check `lindos`, `trevi` and `szechenyi` still resolve.
+4. Inspect destination/town markers, initial Europe-wide framing, source and license links, duplicate-point handling and the scrollable selection card. Confirm town anchors are never called exact entrances; no pin is assigned to Santorini's Pyrgos from the mainland/Cretan records.
+5. Test external Maps searches and sourced town-point actions, returning to the app afterward. Test a source-link failure offline. Gazetteer credit/source/license links should remain readable.
+6. Confirm neutral placeholders across Explore, details, Saved, Trips and Map with no generated artwork or unreviewed photo. A developer may use a **synthetic test fixture only** to exercise a failing photo URL and source-change recovery; it is not a publishable rights record. A real photo's credits and links need device review after its evidence has actually been approved.
+7. Check small-screen layout, increased system text, VoiceOver/TalkBack, safe areas and Android hardware back. Offline guide/search/collections should work after the bundle is cached; basemap tiles and external links need connectivity.

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { View, Text } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MapView, { Marker } from "react-native-maps";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { RootStackParams } from "../../App";
 import { useTravel } from "../state/TravelContext";
-import { Button, PlaceImage, s } from "../components/ui";
+import { Button, PlaceImage, SourceLink, s } from "../components/ui";
 import { verifiedCoordinates } from "../data/placeActions";
 export default function MapScreen() {
   const { destinations } = useTravel();
@@ -24,6 +24,16 @@ export default function MapScreen() {
       return point ? [{ destination: d, attraction: a, point }] : [];
     }),
   );
+  // A town walk at the same point as a destination remains reachable in its guide;
+  // do not stack two indistinguishable pins at exactly the same coordinates.
+  const mapPlaces = places.filter(
+    (p) =>
+      !destinations.some(
+        (d) =>
+          d.coordinates.latitude === p.point.latitude &&
+          d.coordinates.longitude === p.point.longitude,
+      ),
+  );
   return (
     <SafeAreaView style={s.screen} edges={["top"]}>
       <View style={{ padding: 16 }}>
@@ -32,17 +42,17 @@ export default function MapScreen() {
           A world of possibility.
         </Text>
         <Text style={[s.subtitle, { fontSize: 12, lineHeight: 18 }]}>
-          Destination pins are overview points. Place pins appear only after
-          coordinate review.
+          Green: destination overviews. Amber: sourced town overviews, not
+          verified venue entrances.
         </Text>
       </View>
       <MapView
         style={{ flex: 1, minHeight: 120 }}
         initialRegion={{
-          latitude: 42,
-          longitude: 20,
-          latitudeDelta: 18,
-          longitudeDelta: 22,
+          latitude: 43,
+          longitude: 10,
+          latitudeDelta: 24,
+          longitudeDelta: 48,
         }}
         accessibilityLabel="Destination map of Europe"
       >
@@ -51,7 +61,7 @@ export default function MapScreen() {
             key={d.id}
             coordinate={d.coordinates}
             title={d.name}
-            description={`${d.country} · Destination overview (not an attraction entrance)`}
+            description={d.coordinateLabel}
             pinColor="#167568"
             onPress={() => {
               setSelected(d.id);
@@ -59,12 +69,12 @@ export default function MapScreen() {
             }}
           />
         ))}
-        {places.map(({ destination, attraction, point }) => (
+        {mapPlaces.map(({ destination, attraction, point }) => (
           <Marker
             key={`place:${attraction.id}`}
             coordinate={point}
             title={attraction.name}
-            description={`${destination.name} · ${attraction.category}`}
+            description={`${destination.name} · Sourced town overview, not an entrance`}
             pinColor="#B66B35"
             onPress={() => {
               setSelected(destination.id);
@@ -76,10 +86,13 @@ export default function MapScreen() {
       <Text style={[s.body, { fontSize: 12, padding: 12 }]}>
         {places.length === 0
           ? "Attraction coordinates await review; no place pins are published yet."
-          : `${places.length} reviewed place locations · Green: destinations · Amber: places`}
+          : `${places.length} sourced town overviews · No verified venue entrances`}
       </Text>
       {item && (
-        <View style={{ padding: 16, backgroundColor: "#FFFEFA" }}>
+        <ScrollView
+          style={{ maxHeight: 260, backgroundColor: "#FFFEFA" }}
+          contentContainerStyle={{ padding: 16 }}
+        >
           <View style={{ flexDirection: "row", gap: 14, alignItems: "center" }}>
             <View style={{ width: 96 }}>
               <PlaceImage
@@ -102,6 +115,21 @@ export default function MapScreen() {
               </Text>
             </View>
           </View>
+          <Text
+            style={[s.body, { fontSize: 10, lineHeight: 14, marginTop: 8 }]}
+          >
+            {attraction?.coordinateAttribution ??
+              item.coordinateAttribution ??
+              "Legacy destination point: source review pending"}
+          </Text>
+          <SourceLink
+            url={attraction?.coordinateSourceUrl ?? item.coordinateSourceUrl}
+            label="Overview point source"
+          />
+          <SourceLink
+            url={attraction?.coordinateLicenseUrl ?? item.coordinateLicenseUrl}
+            label="Geographic data license"
+          />
           <Button
             label={`Explore ${attraction?.name ?? item.name}`}
             onPress={() =>
@@ -113,7 +141,7 @@ export default function MapScreen() {
                 : navigation.navigate("Destination", { id: item.id })
             }
           />
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );

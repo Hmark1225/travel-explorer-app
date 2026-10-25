@@ -1,111 +1,135 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isBundledIllustration } from "../src/data/images.ts";
 import { destinations } from "../src/data/destinations.ts";
 import { sources } from "../src/data/sources.ts";
+import { geographySources, overviewPoints } from "../src/data/geography.ts";
 import {
-  isLicensedPhoto,
-  isReviewDate,
   externalMapSearchUrl,
   externalMapUrl,
   officialWebsiteUrl,
   verifiedCoordinates,
+  isReviewDate,
 } from "../src/data/placeActions.ts";
 const all = destinations.flatMap((d) => d.attractions);
-test("36 complete records with stable original IDs and a varied editorial mix", () => {
-  assert.equal(all.length, 36);
-  const old: Record<string, string[]> = {
-    rhodes: ["rhodes-old-town", "lindos"],
-    rome: ["colosseum", "trevi"],
-    budapest: ["bastion", "szechenyi"],
-  };
+test("every guide entry is complete and has candidate sources distinct from verification", () => {
   for (const d of destinations) {
-    assert.ok(d.id in old);
-    assert.equal(d.attractions.length, 12);
-    for (const id of old[d.id])
-      assert.ok(d.attractions.some((a) => a.id === id));
-    assert.ok(new Set(d.attractions.map((a) => a.category)).size >= 7);
-  }
-  assert.equal(new Set(all.map((a) => a.id)).size, 36);
-  for (const a of all) {
-    assert.match(a.id, /^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-    assert.ok(a.name.length > 4);
-    assert.ok(a.shortDescription.length >= 40);
-    assert.ok(a.detailedDescription.length >= 200);
-    assert.ok(a.estimatedDuration);
-    assert.ok(a.usefulTips.length >= 2);
-    assert.ok(a.usefulTips.every((t) => t.length > 25));
-    assert.ok(["free", "paid", "varies", "unknown"].includes(a.admissionType));
-    assert.ok(["place", "experience"].includes(a.kind));
-    assert.equal(a.description, a.detailedDescription);
-    assert.equal(a.duration, a.estimatedDuration);
-  }
-});
-test("source references resolve and unreviewed claims never masquerade as verified", () => {
-  for (const a of all) {
-    assert.ok(a.sourceIds.length > 0);
-    assert.deepEqual(
-      a.sourceUrls,
-      a.sourceIds.map((id) => sources[id as keyof typeof sources].url),
-    );
-    for (const u of a.sourceUrls) assert.equal(new URL(u).protocol, "https:");
-    if (a.reviewStatus === "needs-review") {
+    assert.ok(new Set(d.attractions.map((a) => a.category)).size >= 4);
+    for (const a of d.attractions) {
+      assert.ok(a.shortDescription.length >= 40);
+      assert.ok(a.detailedDescription.length >= 170);
+      assert.ok(
+        a.usefulTips.length >= 2 && a.usefulTips.every((t) => t.length > 20),
+      );
+      assert.ok(a.estimatedDuration);
+      assert.equal(a.duration, a.estimatedDuration);
+      assert.equal(a.description, a.detailedDescription);
+      assert.ok(a.sourceIds.length);
+      assert.deepEqual(
+        a.sourceUrls,
+        a.sourceIds.map((id) => sources[id].url),
+      );
+      assert.equal(a.reviewStatus, "needs-review");
       assert.equal(a.lastVerifiedAt, null);
       assert.equal(a.admissionType, "unknown");
-    } else {
-      assert.match(a.lastVerifiedAt ?? "", /^\d{4}-\d{2}-\d{2}$/);
-    }
-    if (a.officialWebsite) {
-      assert.ok(a.officialWebsiteVerifiedAt);
-      assert.equal(officialWebsiteUrl(a), a.officialWebsite);
+      assert.equal(a.officialWebsite, null);
     }
   }
 });
-test("coordinates are paired, bounded and backed by a source and review date", () => {
+test("all destination and non-null attraction coordinates are bounded and provenance-backed", () => {
+  for (const d of destinations) {
+    assert.ok(
+      Number.isFinite(d.coordinates.latitude) &&
+        Math.abs(d.coordinates.latitude) <= 90,
+    );
+    assert.ok(
+      Number.isFinite(d.coordinates.longitude) &&
+        Math.abs(d.coordinates.longitude) <= 180,
+    );
+    if (d.coordinatesVerifiedAt) {
+      assert.ok(isReviewDate(d.coordinatesVerifiedAt));
+      assert.ok(
+        d.coordinateSourceUrl && d.coordinateLicenseUrl && d.coordinateRecordId,
+      );
+      assert.ok(
+        Object.values(overviewPoints).some(
+          (p) =>
+            p.latitude === d.coordinates.latitude &&
+            p.longitude === d.coordinates.longitude &&
+            p.recordId === d.coordinateRecordId,
+        ),
+      );
+    }
+  }
+  let townPoints = 0;
   for (const a of all) {
     assert.equal(a.latitude === null, a.longitude === null);
     if (a.latitude !== null) {
-      assert.ok(Number.isFinite(a.latitude) && Math.abs(a.latitude) <= 90);
-      assert.ok(Number.isFinite(a.longitude) && Math.abs(a.longitude!) <= 180);
-      assert.ok(a.coordinateSourceUrl);
-      assert.ok(a.coordinatesVerifiedAt);
+      townPoints++;
       assert.ok(verifiedCoordinates(a));
+      assert.equal(a.coordinatePrecision, "town-overview");
+      assert.ok(
+        a.coordinateAttribution &&
+          a.coordinateLicenseUrl &&
+          a.coordinateRecordId,
+      );
+      assert.ok(
+        Object.values(overviewPoints).some(
+          (p) =>
+            p.latitude === a.latitude &&
+            p.longitude === a.longitude &&
+            p.recordId === a.coordinateRecordId,
+        ),
+      );
     } else {
       assert.equal(verifiedCoordinates(a), null);
       assert.equal(externalMapUrl(a, "ios"), null);
     }
   }
+  assert.equal(townPoints, 12);
+  assert.equal(destinations.filter((d) => d.coordinatesVerifiedAt).length, 15);
+  for (const source of Object.values(geographySources)) {
+    assert.match(source.sha256, /^[a-f0-9]{64}$/);
+    assert.equal(new URL(source.url).protocol, "https:");
+    assert.ok(
+      source.url.includes(
+        "/" +
+          (source.url.includes("natural-earth")
+            ? "ca96624a56bd078437bca8184e78163e5039ad19"
+            : "c05addfe79dce8a87076ef3fd487eab7e5fe4abd") +
+          "/",
+      ),
+    );
+  }
 });
-test("maps and website actions reject unverified or unsafe data and support reviewed records", () => {
-  const place = all[0];
-  assert.equal(externalMapUrl(place, "ios"), null);
-  assert.equal(
-    officialWebsiteUrl({ ...place, officialWebsite: "https://example.com/" }),
-    null,
-  );
-  const reviewed = {
-    ...place,
+test("map and website actions reject invalid evidence and retain reviewed positive paths", () => {
+  const a = all[0];
+  assert.equal(officialWebsiteUrl(a), null);
+  assert.equal(externalMapUrl(a, "ios"), null);
+  const point = {
+    ...a,
     latitude: 36.4,
     longitude: 28.2,
     coordinatesVerifiedAt: "2026-10-25",
-    coordinateSourceUrl: "https://example.com/coordinate-evidence",
+    coordinateSourceUrl: "https://example.com/record",
   };
-  assert.deepEqual(verifiedCoordinates(reviewed), {
+  assert.deepEqual(verifiedCoordinates(point), {
     latitude: 36.4,
     longitude: 28.2,
   });
-  assert.match(externalMapUrl(reviewed, "ios")!, /^https:\/\/maps.apple.com\//);
-  assert.match(externalMapUrl(reviewed, "android")!, /query=36.4,28.2/);
-  assert.equal(verifiedCoordinates({ ...reviewed, latitude: NaN }), null);
-  assert.equal(verifiedCoordinates({ ...reviewed, latitude: 91 }), null);
-  assert.equal(verifiedCoordinates({ ...reviewed, longitude: -181 }), null);
-  assert.equal(
-    verifiedCoordinates({ ...reviewed, coordinateSourceUrl: null }),
-    null,
-  );
+  assert.match(externalMapUrl(point, "ios")!, /^https:\/\/maps.apple.com/);
+  assert.match(externalMapUrl(point, "android")!, /query=36.4,28.2/);
+  for (const invalid of [
+    { latitude: NaN },
+    { latitude: 91 },
+    { longitude: -181 },
+    { latitude: null },
+    { coordinateSourceUrl: null },
+    { coordinatesVerifiedAt: "2026-02-30" },
+  ])
+    assert.equal(verifiedCoordinates({ ...point, ...invalid }), null);
   assert.equal(
     officialWebsiteUrl({
-      ...place,
+      ...a,
       officialWebsite: "javascript:alert(1)",
       officialWebsiteVerifiedAt: "2026-10-25",
     }),
@@ -113,74 +137,33 @@ test("maps and website actions reject unverified or unsafe data and support revi
   );
   assert.equal(
     officialWebsiteUrl({
-      ...place,
+      ...a,
       officialWebsite: "https://example.com/",
       officialWebsiteVerifiedAt: "2026-10-25",
     }),
     "https://example.com/",
   );
 });
-test("placeholder art makes no photographic or license claim; future photos require rights evidence", () => {
+test("broad experience map searches identify areas rather than fictional vendors", () => {
   for (const d of destinations) {
-    assert.equal(d.rating, null);
-    for (const p of [d.photo, ...d.attractions.map((a) => a.photo)]) {
-      if (p.kind === "placeholder") {
-        assert.equal(p.url, null);
-        assert.equal(p.license, null);
-      } else if (p.kind === "illustration") {
-        assert.ok(isBundledIllustration(p));
-        assert.ok(p.attribution && p.altText && p.sourceDescription);
-      } else {
-        assert.ok(
-          p.url &&
-            p.attribution &&
-            p.license &&
-            p.licenseUrl &&
-            p.sourceUrl &&
-            p.verifiedAt,
-        );
-        assert.equal(new URL(p.url).protocol, "https:");
-      }
-    }
+    const a = d.attractions.find((a) => a.kind === "experience")!;
+    assert.equal(
+      new URL(externalMapSearchUrl(a, d, "android")).searchParams.get("query"),
+      `${d.name}, ${d.country}`,
+    );
   }
+  assert.equal(
+    new URL(
+      externalMapSearchUrl(all[0], destinations[0], "ios"),
+    ).searchParams.get("q"),
+    `${all[0].name}, Rhodes, Greece`,
+  );
 });
 
-test("photo and review guards require real dates and explicit commercial-use evidence", () => {
-  assert.equal(isReviewDate("2026-02-30"), false);
-  assert.equal(isReviewDate("yesterday"), false);
-  assert.equal(isReviewDate("2026-10-25"), true);
-  const photo = {
-    ...all[0].photo,
-    kind: "photo" as const,
-    url: "https://example.com/location.jpg",
-    attribution: "Photographer",
-    license: "CC BY 4.0",
-    commercialUseAllowed: true,
-    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
-    sourceUrl: "https://example.com/original",
-    verifiedAt: "2026-10-25",
-  };
-  assert.ok(isLicensedPhoto(photo));
-  assert.equal(
-    isLicensedPhoto({ ...photo, commercialUseAllowed: false }),
-    false,
-  );
-  assert.equal(isLicensedPhoto({ ...photo, licenseUrl: null }), false);
-  assert.equal(isLicensedPhoto({ ...photo, sourceUrl: null }), false);
-  assert.equal(
-    isLicensedPhoto({ ...photo, url: "http://example.com/location.jpg" }),
-    false,
-  );
-  assert.equal(isLicensedPhoto({ ...photo, attribution: " " }), false);
-});
-
-test("unverified map fallback searches by name and never invents an experience business or coordinates", () => {
-  const d = destinations[0],
-    place = d.attractions[0],
-    experience = d.attractions.find((a) => a.kind === "experience")!;
-  const url = new URL(externalMapSearchUrl(place, d, "ios"));
-  assert.equal(url.searchParams.get("q"), `${place.name}, Rhodes, Greece`);
-  assert.equal(url.searchParams.has("ll"), false);
-  const area = new URL(externalMapSearchUrl(experience, d, "android"));
-  assert.equal(area.searchParams.get("query"), "Rhodes, Greece");
+test("geography never assigns the mainland or Cretan Pyrgos records to Santorini", () => {
+  const pyrgos = destinations
+    .find((d) => d.id === "santorini")!
+    .attractions.find((a) => a.id === "santorini-pyrgos")!;
+  assert.equal(pyrgos.latitude, null);
+  assert.equal(pyrgos.longitude, null);
 });

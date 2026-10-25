@@ -11,7 +11,7 @@ export const sources = {
   greekTourism: {
     name: "Greek National Tourism Organisation",
     url: "https://www.visitgreece.gr/",
-    status: "not-accessed",
+    status: "blocked",
   },
   greekCulture: {
     name: "Hellenic Ministry of Culture",
@@ -61,6 +61,66 @@ export const sources = {
   baths: {
     name: "Széchenyi Thermal Bath",
     url: "https://www.szechenyibath.hu/",
+    status: "not-accessed",
+  },
+  florenceTourism: {
+    name: "Florence official tourism",
+    url: "https://www.feelflorence.it/",
+    status: "blocked",
+  },
+  veniceTourism: {
+    name: "Venezia Unica visitor information",
+    url: "https://www.veneziaunica.it/",
+    status: "not-accessed",
+  },
+  naplesTourism: {
+    name: "Municipality of Naples",
+    url: "https://www.comune.napoli.it/",
+    status: "not-accessed",
+  },
+  italyTourism: {
+    name: "Italian National Tourist Board",
+    url: "https://www.italia.it/",
+    status: "not-accessed",
+  },
+  barcelonaTourism: {
+    name: "Turisme de Barcelona",
+    url: "https://www.barcelonaturisme.com/",
+    status: "not-accessed",
+  },
+  madridTourism: {
+    name: "Madrid official tourism",
+    url: "https://www.esmadrid.com/en",
+    status: "blocked",
+  },
+  mallorcaTourism: {
+    name: "Consell de Mallorca",
+    url: "https://www.mallorca.es/",
+    status: "not-accessed",
+  },
+  parisTourism: {
+    name: "Paris official tourism",
+    url: "https://parisjetaime.com/",
+    status: "not-accessed",
+  },
+  lisbonTourism: {
+    name: "Lisbon tourism association",
+    url: "https://www.visitlisboa.com/",
+    status: "not-accessed",
+  },
+  pragueTourism: {
+    name: "Prague City Tourism",
+    url: "https://www.prague.eu/",
+    status: "not-accessed",
+  },
+  viennaTourism: {
+    name: "Vienna Tourist Board",
+    url: "https://www.wien.info/",
+    status: "not-accessed",
+  },
+  istanbulTourism: {
+    name: "Go T\u00fcrkiye Istanbul tourism",
+    url: "https://istanbul.goturkiye.com/",
     status: "not-accessed",
   },
 } as const;

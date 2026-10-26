@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -28,10 +27,9 @@ import {
   s,
   colors,
 } from "../components/ui";
+import { PartnerPlanning } from "../components/PartnerPlanning";
 import { DestinationFeed } from "../components/DestinationFeed";
 import {
-  externalMapSearchUrl,
-  externalMapUrl,
   officialWebsiteUrl,
 } from "../data/placeActions";
 import { useLanguage } from "../i18n/LanguageProvider";
@@ -363,6 +361,7 @@ export function DestinationScreen({
         )}
         onPress={() => state.toggleTrip(item.id)}
       />
+      <PartnerPlanning key={item.id} destination={item} />
       <Text style={s.section}>
         {t("destination.ways", { count: item.attractions.length })}
       </Text>
@@ -407,11 +406,7 @@ export function AttractionScreen({
         <Text style={s.title}>{t("attraction.unavailable")}</Text>
       </Page>
     );
-  const website = officialWebsiteUrl(a),
-    mapUrl = externalMapUrl(a, Platform.OS === "ios" ? "ios" : "android"),
-    mapSearchUrl = d
-      ? externalMapSearchUrl(a, d, Platform.OS === "ios" ? "ios" : "android")
-      : null;
+  const website = officialWebsiteUrl(a);
   const openUrl = async (url: string) => {
     try {
       await Linking.openURL(url);
@@ -464,37 +459,7 @@ export function AttractionScreen({
           {t("attraction.websitePending")}
         </Text>
       )}
-      {mapUrl ? (
-        <Button
-          secondary
-          label={t(
-            a.coordinatePrecision === "town-overview"
-              ? "attraction.openTown"
-              : "attraction.openLocation",
-          )}
-          onPress={() => void openUrl(mapUrl)}
-        />
-      ) : (
-        <Text style={[s.body, { marginTop: 16 }]}>
-          {t("attraction.locationPending")}
-        </Text>
-      )}
-      {!mapUrl && mapSearchUrl && (
-        <>
-          <Button
-            secondary
-            label={t(
-              a.kind === "place"
-                ? "attraction.searchPlace"
-                : "attraction.searchArea",
-            )}
-            onPress={() => void openUrl(mapSearchUrl)}
-          />
-          <Text style={[s.body, { fontSize: 12, marginTop: 8 }]}>
-            {t("attraction.searchNote")}
-          </Text>
-        </>
-      )}
+      {d && <PartnerPlanning key={`${d.id}:${a.id}`} destination={d} attraction={a} />}
       {a.coordinatesVerifiedAt && (
         <View style={{ marginTop: 16 }}>
           <Text style={s.body}>

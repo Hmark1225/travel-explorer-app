@@ -356,6 +356,7 @@ test("application-owned JSX labels and alert copy are translation expressions, n
     "src/screens/MapScreen.tsx",
     "src/components/ui.tsx",
     "src/components/DestinationFeed.tsx",
+    "src/components/PartnerPlanning.tsx",
     "src/i18n/LanguageProvider.tsx",
   ];
   const findings: string[] = [];

@@ -5,3 +5,7 @@ dist/
 .env.*
 !.env.example
 *.tsbuildinfo
+supabase/seed.sql
+supabase/.temp/
+supabase/.branches/
+supabase/verify-import.sql

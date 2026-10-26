@@ -1,0 +1,9 @@
+# Non-destructive rollback and recovery
+
+1. Switch the application configuration to `EXPO_PUBLIC_CONTENT_SOURCE=bundled`, rebuild/restart as needed, and verify browsing, Saved and Trips. The existing AsyncStorage data is never migrated or cleared, so application rollback requires no collection restore.
+2. If public database access must stop immediately, execute `supabase/rollback/disable_public_catalog.sql` through a privileged connection. It revokes API view SELECT for anon/authenticated without deleting content or accounts. Public catalog requests then fail and the adapter keeps bundled content. This is a manual emergency operation, not an automatic migration down-step.
+3. Pause future importer/admin jobs and investigate with protected backups and logs. Preserve the migration ledger, imported records, source evidence, Auth accounts and private collections. Do not run db reset, DROP SCHEMA CASCADE, TRUNCATE or seed overwrites on a real project.
+4. Correct problems with a new reviewed forward migration. If recovery requires restoring a backup, first restore to an isolated project, verify record counts/IDs/translations/grants/RLS and private ownership, and plan any changes since the backup. Never overwrite active user data without a separate recovery decision.
+5. To resume, restore only the three public view SELECT grants through a reviewed forward migration, re-run RLS and import verification, publish approved content and opt the app back in only after staging validation. The original migrations are immutable once deployed.
+
+The automated SQL suite tests that the emergency revoke denies public access while leaving private data and content counts intact. Removing the database foundation entirely is intentionally not provided as a routine rollback: dropping these tables could destroy future account data. For disposable test databases only, delete/recreate the isolated instance, never an existing production application.

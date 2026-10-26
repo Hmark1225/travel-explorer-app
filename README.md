@@ -105,7 +105,7 @@ npm run audit:localization -- --write
 npm run audit:localization -- --check
 ```
 
-The current catalog covers **167 UI templates, 18 destinations, 156 attractions, 312 tips and 19 duration phrases**, with **zero missing/incomplete translations**. Proper names may intentionally remain in their original form. Brand text, legal photo credits/licenses/provenance, source URLs and geographic attribution remain verbatim; their surrounding UI is translated. Vendor basemap labels, external websites and operating-system dialogs remain controlled by their provider/system locale. Translation does not change the underlying travel-source review status or photo-rights policy.
+The current catalog covers **169 UI templates, 18 destinations, 156 attractions, 312 tips and 19 duration phrases**, with **zero missing/incomplete translations**. Proper names may intentionally remain in their original form. Brand text, legal photo credits/licenses/provenance, source URLs and geographic attribution remain verbatim; their surrounding UI is translated. Vendor basemap labels, external websites and operating-system dialogs remain controlled by their provider/system locale. Translation does not change the underlying travel-source review status or photo-rights policy.
 
 Device checks remain pending: toggle languages in Profile and verify the current tab and all navigation labels change without restarting; open old/new destinations and first/middle/last attraction entries in both languages; test Hungarian names and accent-free search; close/reopen to verify the manual choice persists; confirm old Saved/Trips survive both switching and restart. Check long Hungarian text and `á é í ó ö ő ú ü ű` on a small iPhone with larger system text and VoiceOver, then repeat navigation/back behavior on Android. On a fresh test installation verify Hungarian/English/unsupported primary device locales, without deleting real user collections. Authored content is fully translated; this automated coverage report does not substitute for device or independent linguistic QA.
 
@@ -116,3 +116,16 @@ Destination details now include **Plan your trip**, and attraction details inclu
 Booking.com, Viator, Tripadvisor and GetYourGuide have modular provider definitions but stay disabled until their exact URLs and configuration are reviewed. There are no active affiliate links, analytics, live partner API calls or invented offers. The provider layer supports verified localized mappings, feature flags, approval checks and safe navigation.
 
 [Configuration and activation gates](docs/partners/README.md) · [Future Supabase APIs and cache/licence policy](docs/partners/supabase-architecture.md) · [Draft human review checklist](docs/partners/review-checklist.md) · [Validation results](docs/partners/validation.md)
+
+## Supabase database foundation
+
+Supabase is optional and disabled by default. [Setup and staged cutover](docs/supabase/setup.md) explains the three versioned migrations, insert-only seed generator, protected public views, private ownership policies, exact string-ID preservation and validated bundled fallback. No remote project has been deployed by this change.
+
+```sh
+npm run db:seed:generate
+npm run test:database
+```
+
+[Expected import manifest](docs/supabase/import-manifest.json) · [Local import verification](docs/supabase/local-import-verification.json) · [Security/admin foundation](docs/supabase/security.md) · [Non-destructive rollback](docs/supabase/rollback.md) · [Validation](docs/supabase/validation.md)
+
+Use `.env.example` for public configuration only. Never place secret or service-role keys in an Expo public variable. Browsing does not require login; local Saved/Trips remain on-device under `travel-explorer:v1` and are never silently uploaded.

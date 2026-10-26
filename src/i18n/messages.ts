@@ -1,4 +1,6 @@
 export const en = {
+  "error.contentFallback": "Online content is unavailable or not fully published yet. The bundled guide is available; your saved places and trips are unchanged.",
+  "error.contentConfiguration": "Online content is not configured. The bundled guide is available.",
   "partner.visitTitle": "Plan your visit",
   "partner.tripTitle": "Plan your trip",
   "partner.accommodation": "Find accommodation",
@@ -189,6 +191,8 @@ export const en = {
 } as const;
 export type MessageKey = keyof typeof en;
 export const hu: Record<MessageKey, string> = {
+  "error.contentFallback": "Az online tartalom nem érhető el, vagy még nincs teljesen közzétéve. A beépített útikalauz elérhető; a mentett helyeid és utazásterveid változatlanok.",
+  "error.contentConfiguration": "Az online tartalom nincs beállítva. A beépített útikalauz elérhető.",
   "partner.visitTitle": "Tervezd meg a látogatásod",
   "partner.tripTitle": "Tervezd meg az utazásod",
   "partner.accommodation": "Szállás keresése",

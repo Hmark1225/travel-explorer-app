@@ -1,6 +1,6 @@
 # Localization architecture
 
-Travel Explorer supports `en` and `hu` throughout application-owned UI and travel content. English remains the source language. The current dataset has no missing Hungarian translations: 18 destinations, 156 attraction/program records, 312 individual tips, 19 duration phrases and 167 UI templates. See localization-report.json for the reproducible inventory. The previous travel-source review limitations remain unchanged.
+Travel Explorer supports `en` and `hu` throughout application-owned UI and travel content. English remains the source language. The current dataset has no missing Hungarian translations: 18 destinations, 156 attraction/program records, 312 individual tips, 19 duration phrases and 169 UI templates. See localization-report.json for the reproducible inventory. The previous travel-source review limitations remain unchanged.
 
 ## Data and display boundaries
 

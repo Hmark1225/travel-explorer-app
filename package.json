@@ -8,6 +8,7 @@
     "@react-navigation/bottom-tabs": "^7.21.0",
     "@react-navigation/native": "^7.5.1",
     "@react-navigation/native-stack": "^7.21.0",
+    "@supabase/supabase-js": "^2.118.0",
     "expo": "~58.0.19",
     "expo-localization": "~58.0.5",
     "expo-status-bar": "~58.0.4",
@@ -15,9 +16,12 @@
     "react-native": "0.88.0",
     "react-native-maps": "1.29.11",
     "react-native-safe-area-context": "~5.10.1",
-    "react-native-screens": "~4.30.0"
+    "react-native-screens": "~4.30.0",
+    "react-native-url-polyfill": "^4.0.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.12",
     "@types/node": "^26.6.5",
     "@types/react": "~19.3.0",
     "typescript": "~6.0.3"
@@ -30,7 +34,9 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "export:check": "expo export --platform ios --platform android",
     "audit:content": "node --experimental-strip-types scripts/audit-content.ts",
-    "audit:localization": "node --experimental-strip-types scripts/audit-localization.ts"
+    "audit:localization": "node --experimental-strip-types scripts/audit-localization.ts",
+    "db:seed:generate": "node --experimental-strip-types scripts/supabase/generate-seed.ts",
+    "test:database": "node --experimental-strip-types tests/database.test.ts"
   },
   "private": true
 }

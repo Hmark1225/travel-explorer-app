@@ -17,6 +17,7 @@ type State = {
   trips: string[];
   loading: boolean;
   error: MessageKey | "";
+  contentNotice: MessageKey | "";
   toggleSaved: (id: string) => void;
   toggleTrip: (id: string) => void;
   retry: () => void;
@@ -29,6 +30,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
     [loading, setLoading] = useState(true),
     [error, setError] = useState<MessageKey | "">(""),
     [attempt, setAttempt] = useState(0);
+  const [contentNotice, setContentNotice] = useState<MessageKey | "">("");
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let active = true;
@@ -37,7 +39,10 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
     travelRepository
       .listDestinations()
       .then((d) => {
-        if (active) setDestinations(d);
+        if (active) {
+          if (d.length) setDestinations(d);
+          setContentNotice(travelRepository.notice ?? "");
+        }
       })
       .catch(() => {
         if (active) setError("error.destinations");
@@ -91,6 +96,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
         trips,
         loading: loading || !hydrated,
         error,
+        contentNotice,
         toggleSaved: (id) => toggle(setSaved, id),
         toggleTrip: (id) => toggle(setTrips, id),
         retry: () => setAttempt((x) => x + 1),
@@ -109,5 +115,5 @@ export function useTravel() {
     [state?.destinations, language],
   );
   if (!state) throw new Error("TravelProvider is required");
-  return { ...state, destinations, error: state.error ? t(state.error) : "" };
+  return { ...state, destinations, error: state.error ? t(state.error) : state.contentNotice ? t(state.contentNotice) : "" };
 }

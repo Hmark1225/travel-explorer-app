@@ -9,3 +9,7 @@ supabase/seed.sql
 supabase/.temp/
 supabase/.branches/
 supabase/verify-import.sql
+admin/.next/
+admin/playwright-report/
+admin/test-results/
+.validation/

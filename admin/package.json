@@ -1,0 +1,28 @@
+{
+  "name": "travel-explorer-admin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build --webpack",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:browser": "cd .. && node --experimental-strip-types admin/tests/run-browser.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "@sparticuz/chromium": "153.0.0",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.2.3",
+    "typescript": "6.0.3"
+  }
+}

@@ -13,7 +13,7 @@ test("PostgreSQL migrations, repeatable seed, public projections, RLS and owners
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(sqlFile("supabase/tests/bootstrap.sql"));
-  const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter((f) => f.endsWith(".sql")).sort();
+  const migrations = readdirSync(new URL("../supabase/migrations/", import.meta.url)).filter((f) => f.endsWith(".sql")).sort().slice(0, 3); // Foundation contract; admin workflow has a separate migration suite.
   for (const file of migrations) await db.exec(sqlFile("supabase/migrations/" + file));
   const seed = buildSeed();
   assert.equal(buildSeed().sql, seed.sql);

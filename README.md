@@ -129,3 +129,17 @@ npm run test:database
 [Expected import manifest](docs/supabase/import-manifest.json) · [Local import verification](docs/supabase/local-import-verification.json) · [Security/admin foundation](docs/supabase/security.md) · [Non-destructive rollback](docs/supabase/rollback.md) · [Validation](docs/supabase/validation.md)
 
 Use `.env.example` for public configuration only. Never place secret or service-role keys in an Expo public variable. Browsing does not require login; local Saved/Trips remain on-device under `travel-explorer:v1` and are never silently uploaded.
+
+## Editorial admin dashboard v1
+
+The separate Next.js application lives in `admin/`; it does not replace the Expo app. It provides Supabase Auth login, RLS-protected editorial content management, English/Hungarian editors, private photo intake/review, partner-link preparation, revision conflicts and append-only audit history. The new admin migration is version-controlled and **not automatically applied to production**.
+
+[Admin setup and first verified administrator](docs/admin/README.md) · [Security/advisor review](docs/admin/security-review.md) · [Vercel deployment](docs/admin/deployment.md) · [Validation and remaining device checks](docs/admin/validation.md)
+
+```sh
+cd admin
+npm ci
+npm run dev
+```
+
+Configure the actual public project settings and manually authorize a verified Auth user before use. No credentials, first-user admin grant, automatic publication or private collection sync is included.

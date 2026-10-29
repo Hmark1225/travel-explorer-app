@@ -1,5 +1,7 @@
 # Supabase foundation and staged cutover
 
+**Current mobile behavior:** [Progressive publishing](mobile-publishing.md) supersedes the initial full-catalog cutover gate described below. You can opt in with a single reviewed publication; the shipped guide remains the baseline. No database policy is relaxed.
+
 This branch prepares the database and optional public-read adapter. **No Supabase project, credentials or remote deployment was available or used.** The committed import verification describes a local PostgreSQL test run, not a hosted deployment. This is still the existing Expo SDK 58 application, with all editorial content and local collections preserved.
 
 ## Current implementation

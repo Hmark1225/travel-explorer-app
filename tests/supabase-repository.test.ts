@@ -8,8 +8,8 @@ import { localizeDestination } from "../src/i18n/content.ts";
 import { resolvePartnerLinks } from "../src/partners/links.ts";
 
 function approvedCatalog() {
-  return destinations.map((d) => ({ ...d, reviewStatus: "reviewed", lastVerifiedAt: "2026-10-26",
-    attractions: d.attractions.map((a) => ({ ...a, reviewStatus: "reviewed", lastVerifiedAt: "2026-10-26" })),
+  return destinations.map((d) => ({ ...d, reviewStatus: "reviewed" as const, lastVerifiedAt: "2026-10-26",
+    attractions: d.attractions.map((a) => ({ ...a, reviewStatus: "reviewed" as const, lastVerifiedAt: "2026-10-26" })),
   }));
 }
 const transport = (payloads: unknown[]) => ({ async page() { return { data: payloads.map((payload: any) => ({ id: payload.id, payload })), error: null }; } });
@@ -54,9 +54,9 @@ test("public DTO adapter preserves IDs/localization/coordinates and partner beha
   payloads[0].heroImage = { ...payloads[0].heroImage, kind: "photo", url: "https://example.com/unapproved.jpg" };
   assert.equal(parseCatalog(payloads)[0].heroImage.url, null);
 });
-test("offline, error, empty, partial, draft, malformed and missing translations retain the validated bundled guide", async () => {
+test("draft, malformed and missing translations retain the validated bundled guide", async () => {
   const valid = approvedCatalog();
-  const mutations = [[], valid.slice(1), [{ ...valid[0], attractions: [] }, ...valid.slice(1)], destinations,
+  const mutations = [destinations,
     [{ ...valid[0], localized: { en: valid[0].localized.en } }, ...valid.slice(1)],
     [{ ...valid[0], coordinates: { latitude: 99, longitude: 1 } }, ...valid.slice(1)],
     [{ ...valid[0], coordinateSourceUrl: "javascript:bad" }, ...valid.slice(1)],
@@ -73,6 +73,77 @@ test("offline, error, empty, partial, draft, malformed and missing translations 
     assert.equal(await repo.listDestinations(), destinations);
     assert.equal(repo.notice, "error.contentFallback");
   }
+});
+
+test("one published destination updates both languages without removing bundled attractions or collections", async () => {
+  const update = approvedCatalog()[0];
+  update.localized = { en: { ...update.localized.en, description: "Published English update" },
+    hu: { ...update.localized.hu, description: "Közzétett magyar frissítés" } };
+  update.attractions = [];
+  const repo = new FallbackTravelRepository(new SupabaseTravelRepository(transport([update])), destinations);
+  const result = await repo.listDestinations();
+  assert.equal(result.length, destinations.length);
+  assert.equal(result[0].description, "Published English update");
+  assert.equal(localizeDestination(result[0], "hu").description, "Közzétett magyar frissítés");
+  assert.deepEqual(result[0].attractions, destinations[0].attractions);
+  assert.deepEqual(result.map((d) => d.id), destinations.map((d) => d.id));
+  assert.equal(repo.notice, "");
+  assert.equal(repo.contentStatus, "content.online");
+  assert.equal(resolvePartnerLinks(result[0], result[0].attractions[0], "hu")[0].providerId, "google-maps");
+});
+
+test("partial attraction updates and new places merge without collisions or reparenting stable IDs", async () => {
+  const update = approvedCatalog()[0];
+  const first = update.attractions[0];
+  first.localized = { en: { ...first.localized.en, shortDescription: "Updated attraction" }, hu: first.localized.hu };
+  update.attractions = [first, { ...first, id: "new-rhodes-place" }];
+  const added = { ...approvedCatalog()[1], id: "new-destination", attractions: [] };
+  const repo = new FallbackTravelRepository(new SupabaseTravelRepository(transport([update, added])), destinations);
+  const result = await repo.listDestinations();
+  assert.equal(result[0].attractions[0].shortDescription, "Updated attraction");
+  assert.equal(result[0].attractions.length, destinations[0].attractions.length + 1);
+  assert.equal(result.at(-1)!.id, "new-destination");
+  assert.equal(result.length, destinations.length + 1);
+  for (const bad of [
+    { ...update, id: destinations[1].id },
+    { ...update, id: destinations[0].attractions[0].id },
+    { ...update, attractions: [{ ...first, id: destinations[1].id }] },
+  ]) {
+    const rejected = new FallbackTravelRepository(new SupabaseTravelRepository(transport([bad])), destinations);
+    assert.equal(await rejected.listDestinations(), destinations);
+    assert.equal(rejected.notice, "error.contentFallback");
+  }
+});
+
+test("network failure keeps the last valid session guide; successful withdrawal reverts to shipped content", async () => {
+  let payloads: unknown[] = [approvedCatalog()[0]];
+  let offline = false;
+  const repo = new FallbackTravelRepository(new SupabaseTravelRepository({ async page() {
+    if (offline) throw Error("offline");
+    return transport(payloads).page();
+  } }), destinations);
+  const good = await repo.listDestinations();
+  offline = true;
+  assert.equal(await repo.listDestinations(), good);
+  assert.equal(repo.notice, "error.contentFallback");
+  offline = false;
+  payloads = [];
+  assert.equal(await repo.listDestinations(), destinations);
+  assert.equal(repo.notice, "");
+  assert.equal(repo.contentStatus, "content.awaitingPublication");
+});
+
+test("overlapping refreshes share one public request and cannot overwrite each other", async () => {
+  let calls = 0;
+  let complete!: (value: ReturnType<typeof approvedCatalog>) => void;
+  const response = new Promise<ReturnType<typeof approvedCatalog>>(resolve => { complete = resolve; });
+  const repo = new FallbackTravelRepository({async listDestinations() { calls++; return response; }}, destinations);
+  const first = repo.listDestinations();
+  const second = repo.listDestinations();
+  complete([approvedCatalog()[0]]);
+  assert.equal(await first, await second);
+  assert.equal(calls, 1);
+  assert.equal(repo.contentStatus, "content.online");
 });
 test("timeouts are bounded, abort requests, and recover on retry without persisting empty data", async () => {
   let signal: AbortSignal | undefined;

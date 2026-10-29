@@ -221,13 +221,17 @@ export function TripsScreen() {
   return <Collection trips />;
 }
 export function ProfileScreen() {
-  const { saved, trips } = useTravel();
+  const { saved, trips, loading, retry, contentStatus, contentNotice } = useTravel();
   const { t, language, setLanguage, error } = useLanguage();
   return (
     <Page>
       <Text style={s.eyebrow}>{t("profile.eyebrow")}</Text>
       <Text style={s.title}>{t("profile.title")}</Text>
       <Text style={s.subtitle}>{t("profile.subtitle")}</Text>
+      <Text style={s.section}>{t("content.title")}</Text>
+      <Text accessibilityLiveRegion="polite" style={s.body}>{t(contentStatus)}</Text>
+      {!!contentNotice && <Text accessibilityRole="alert" style={s.body}>{t(contentNotice)}</Text>}
+      <Button label={t(loading ? "content.refreshing" : "content.refresh")} onPress={retry} disabled={loading} />
       <Text style={s.section}>{t("language.title")}</Text>
       <Text style={s.body}>{t("language.description")}</Text>
       <View

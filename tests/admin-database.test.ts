@@ -46,10 +46,24 @@ test('admin workflow, CAS, audit, storage and publication security',async t=>{
   await transition('destinations','rhodes','approve');
   await transition('destinations','rhodes','publish');
   assert.equal((await as('anon','','select id from travel_destinations')).rows.length,1);
+  // Exercise the actual anonymous public projection through the mobile repository.
+  // Other destinations/attractions remain drafts, so a full-catalog gate would reject this.
+  const { destinations } = await import('../src/data/destinations.ts');
+  const { FallbackTravelRepository, SupabaseTravelRepository } = await import('../src/services/supabase/repository.ts');
+  const publicRows = (await as('anon','','select id,payload from travel_destinations')).rows;
+  assert.equal(publicRows[0].payload.attractions.length,0);
+  assert.ok(!JSON.stringify(publicRows).includes('review_note'));
+  const mobile = new FallbackTravelRepository(new SupabaseTravelRepository({async page(){return {data:publicRows,error:null}}}),destinations);
+  const merged = await mobile.listDestinations();
+  assert.equal(mobile.contentStatus,'content.online');
+  assert.deepEqual(merged.map(d=>d.id),destinations.map(d=>d.id));
+  assert.equal(merged[0].reviewStatus,'reviewed');
+  assert.equal(merged[0].attractions.length,destinations[0].attractions.length);
   await as('authenticated',admin,"update destination_translations set tagline='Updated editorial text' where destination_id='rhodes' and language='en'");
   const changed=await row('destinations','rhodes');
   assert.equal(changed.publication_status,'draft');assert.equal(changed.approval_status,'pending');
   assert.equal((await as('anon','','select id from travel_destinations')).rows.length,0);
+  assert.equal(await new FallbackTravelRepository(new SupabaseTravelRepository({async page(){return {data:[],error:null}}}),destinations).listDestinations(),destinations);
   await as('authenticated',admin,"delete from destination_translations where destination_id='rhodes' and language='hu'");
   await transition('destinations','rhodes','review');
   await assert.rejects(transition('destinations','rhodes','approve'),/English and Hungarian/);

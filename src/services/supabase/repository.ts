@@ -1,7 +1,7 @@
 import type { Destination } from "../../data/models";
 import type { MessageKey } from "../../i18n/messages";
 import type { TravelRepository } from "../travelRepository";
-import { parseCatalog, preservesBundledIds } from "./catalog.ts";
+import { mergePublishedCatalog, parseCatalog } from "./catalog.ts";
 
 /** Narrow boundary for deterministic testing without network access or credentials. */
 export interface CatalogTransport {
@@ -33,35 +33,47 @@ export class SupabaseTravelRepository implements TravelRepository {
         if (!payload || typeof payload !== "object" || !("id" in payload) || row.id !== payload.id) throw new Error("Public row ID mismatch");
         rows.push(payload);
       }
-      if (result.data.length < size) return parseCatalog(rows);
+      if (result.data.length < size) return rows.length ? parseCatalog(rows) : [];
     }
     throw new Error("Public catalog limit exceeded");
   }
 }
 export class FallbackTravelRepository implements TravelRepository {
   notice: MessageKey | "" = "";
+  contentStatus: MessageKey = "content.bundled";
+  private lastGood: Destination[];
+  private inFlight: Promise<Destination[]> | null = null;
   private remote: TravelRepository | null;
   private bundled: Destination[];
   private unavailableConfiguration: boolean;
   constructor(remote: TravelRepository | null, bundled: Destination[], unavailableConfiguration = false) {
     // Validate the checked-in dataset too; it remains the offline source of truth in this phase.
     parseCatalog(bundled, false);
-    this.remote = remote; this.bundled = bundled; this.unavailableConfiguration = unavailableConfiguration;
+    this.remote = remote; this.bundled = bundled; this.lastGood = bundled; this.unavailableConfiguration = unavailableConfiguration;
   }
   async listDestinations(): Promise<Destination[]> {
+    if (this.inFlight) return this.inFlight;
+    this.inFlight = this.load();
+    try { return await this.inFlight; } finally { this.inFlight = null; }
+  }
+  private async load(): Promise<Destination[]> {
     if (!this.remote) {
       this.notice = this.unavailableConfiguration ? "error.contentConfiguration" : "";
+      this.contentStatus = "content.bundled";
       return this.bundled;
     }
     try {
-      const data = parseCatalog(await this.remote.listDestinations());
-      if (!preservesBundledIds(data, this.bundled)) throw new Error("Incomplete published catalog");
+      const payloads = await this.remote.listDestinations();
+      const data = payloads.length ? mergePublishedCatalog(parseCatalog(payloads), this.bundled) : this.bundled;
       this.notice = "";
+      this.contentStatus = payloads.length ? "content.online" : "content.awaitingPublication";
+      this.lastGood = data;
       return data;
     } catch {
       this.notice = "error.contentFallback";
-      // Never persist partial/empty responses, remove stable IDs or replace the bundled guide on failure.
-      return this.bundled;
+      this.contentStatus = "content.fallback";
+      // Retain the last validated guide in this session. No editorial/auth/private data is persisted.
+      return this.lastGood;
     }
   }
 }

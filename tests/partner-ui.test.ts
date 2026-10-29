@@ -133,6 +133,7 @@ test("existing Saved and Trips hydrate, toggle and persist across partner handof
   const { localizeDestination } = await import("../src/i18n/content.ts");
   const mocks: Record<string, unknown> = {
     react: { __esModule: true, default: react, ...react },
+    "../data/destinations": { destinations },
     "@react-native-async-storage/async-storage": { __esModule: true, default: {
       async getItem(key: string) { return stored.get(key) ?? null; },
       async setItem(key: string, value: string) { stored.set(key, value); },

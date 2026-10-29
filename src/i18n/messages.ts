@@ -1,5 +1,12 @@
 export const en = {
-  "error.contentFallback": "Online content is unavailable or not fully published yet. The bundled guide is available; your saved places and trips are unchanged.",
+  "error.contentFallback": "Updates could not be loaded. Your last available guide, saved places and trips are still available.",
+  "content.title": "Guide updates",
+  "content.bundled": "Using the guide included with this app.",
+  "content.online": "Published guide updates loaded. Other places remain available from the included guide.",
+  "content.awaitingPublication": "Connected. No published updates yet; the included guide is available.",
+  "content.fallback": "Using the last available guide. Try refreshing when you have a connection.",
+  "content.refresh": "Refresh guide",
+  "content.refreshing": "Refreshing guide…",
   "error.contentConfiguration": "Online content is not configured. The bundled guide is available.",
   "partner.visitTitle": "Plan your visit",
   "partner.tripTitle": "Plan your trip",
@@ -191,7 +198,14 @@ export const en = {
 } as const;
 export type MessageKey = keyof typeof en;
 export const hu: Record<MessageKey, string> = {
-  "error.contentFallback": "Az online tartalom nem érhető el, vagy még nincs teljesen közzétéve. A beépített útikalauz elérhető; a mentett helyeid és utazásterveid változatlanok.",
+  "error.contentFallback": "A frissítéseket nem sikerült betölteni. A legutóbb elérhető útikalauz, a mentett helyeid és az utazásterveid továbbra is elérhetők.",
+  "content.title": "Útikalauz frissítése",
+  "content.bundled": "Az alkalmazásba beépített útikalauzt használod.",
+  "content.online": "A közzétett frissítések betöltődtek. A többi hely továbbra is elérhető a beépített útikalauzból.",
+  "content.awaitingPublication": "A kapcsolat működik. Még nincs közzétett frissítés; a beépített útikalauz elérhető.",
+  "content.fallback": "A legutóbb elérhető útikalauzt használod. Próbáld meg a frissítést, ha van internetkapcsolatod.",
+  "content.refresh": "Útikalauz frissítése",
+  "content.refreshing": "Útikalauz frissítése…",
   "error.contentConfiguration": "Az online tartalom nincs beállítva. A beépített útikalauz elérhető.",
   "partner.visitTitle": "Tervezd meg a látogatásod",
   "partner.tripTitle": "Tervezd meg az utazásod",

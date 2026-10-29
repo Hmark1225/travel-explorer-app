@@ -5,6 +5,7 @@ import { createCatalogTransport } from "./supabase/client.ts";
 import { supabaseSettings } from "./supabase/config.ts";
 export interface TravelRepository {
   readonly notice?: MessageKey | "";
+  readonly contentStatus?: MessageKey;
   listDestinations(): Promise<Destination[]>;
 }
 // Expo replaces these exact static expressions at bundle time. They are PUBLIC configuration only.

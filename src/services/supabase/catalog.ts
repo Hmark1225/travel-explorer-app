@@ -74,3 +74,31 @@ export function preservesBundledIds(remote: Destination[], bundled: Destination[
     return replacement && d.attractions.every((a) => replacement.attractions.some((candidate) => candidate.id === a.id));
   });
 }
+
+/** Published records override the shipped guide individually; absent rows never delete it. */
+export function mergePublishedCatalog(remote: Destination[], bundled: Destination[]): Destination[] {
+  const destinationIds = new Set(bundled.map((d) => d.id));
+  const owners = new Map(bundled.flatMap((d) => d.attractions.map((a) => [a.id, d.id] as const)));
+  for (const d of remote) {
+    if (owners.has(d.id)) throw new Error("Destination ID conflicts with a bundled attraction");
+    for (const a of d.attractions) {
+      if (destinationIds.has(a.id) || (owners.has(a.id) && owners.get(a.id) !== d.id)) {
+        throw new Error("Published attraction conflicts with a stable bundled ID");
+      }
+    }
+  }
+  const updates = new Map(remote.map((d) => [d.id, d]));
+  return [
+    ...bundled.map((d) => {
+      const update = updates.get(d.id);
+      if (!update) return d;
+      const attractions = new Map(update.attractions.map((a) => [a.id, a]));
+      const oldIds = new Set(d.attractions.map((a) => a.id));
+      return { ...update, attractions: [
+        ...d.attractions.map((a) => attractions.get(a.id) ?? a),
+        ...update.attractions.filter((a) => !oldIds.has(a.id)),
+      ] };
+    }),
+    ...remote.filter((d) => !destinationIds.has(d.id)),
+  ];
+}

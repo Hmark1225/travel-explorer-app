@@ -27,19 +27,24 @@ export function Button({
   label,
   onPress,
   secondary = false,
+  disabled = false,
 }: {
   label: string;
   onPress: () => void;
   secondary?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         s.button,
         secondary && { backgroundColor: "#E7EEE7" },
         pressed && { opacity: 0.7 },
+        disabled && { opacity: 0.5 },
       ]}
     >
       <Text style={[s.buttonText, secondary && { color: colors.ink }]}>

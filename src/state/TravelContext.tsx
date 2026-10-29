@@ -6,7 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Destination } from "../data/destinations";
+import { destinations as bundledDestinations, type Destination } from "../data/destinations";
 import { travelRepository } from "../services/travelRepository";
 import { useLanguage } from "../i18n/LanguageProvider";
 import { localizeDestination } from "../i18n/content";
@@ -18,19 +18,21 @@ type State = {
   loading: boolean;
   error: MessageKey | "";
   contentNotice: MessageKey | "";
+  contentStatus: MessageKey;
   toggleSaved: (id: string) => void;
   toggleTrip: (id: string) => void;
   retry: () => void;
 };
 const Context = createContext<State | null>(null);
 export function TravelProvider({ children }: React.PropsWithChildren) {
-  const [destinations, setDestinations] = useState<Destination[]>([]),
+  const [destinations, setDestinations] = useState<Destination[]>(bundledDestinations),
     [saved, setSaved] = useState<string[]>([]),
     [trips, setTrips] = useState<string[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState<MessageKey | "">(""),
     [attempt, setAttempt] = useState(0);
   const [contentNotice, setContentNotice] = useState<MessageKey | "">("");
+  const [contentStatus, setContentStatus] = useState<MessageKey>("content.bundled");
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let active = true;
@@ -42,6 +44,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
         if (active) {
           if (d.length) setDestinations(d);
           setContentNotice(travelRepository.notice ?? "");
+          setContentStatus(travelRepository.contentStatus ?? "content.bundled");
         }
       })
       .catch(() => {
@@ -97,6 +100,7 @@ export function TravelProvider({ children }: React.PropsWithChildren) {
         loading: loading || !hydrated,
         error,
         contentNotice,
+        contentStatus,
         toggleSaved: (id) => toggle(setSaved, id),
         toggleTrip: (id) => toggle(setTrips, id),
         retry: () => setAttempt((x) => x + 1),
